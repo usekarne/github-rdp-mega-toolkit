@@ -7,10 +7,7 @@ on:
         description: "Optimization profile"
         required: false
         type: choice
-        options:
-          - productivity
-          - gaming
-          - minimal
+        options: [productivity, gaming, minimal]
         default: productivity
       install_software:
         description: "Install software list?"
@@ -37,46 +34,42 @@ jobs:
 
       - name: "Setup RDP"
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\setup-rdp.ps1
+        run: .\core\powershell\setup-rdp.ps1
 
       - name: "Optimize Windows"
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\optimize-windows.ps1
+        run: .\core\powershell\optimize-windows.ps1
 
       - name: "Install Software"
         if: ${{ inputs.install_software }}
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\install-software.ps1
+        run: .\core\powershell\install-software.ps1
 
       - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\setup-tunnel.ps1
+        run: .\core\powershell\setup-tunnel.ps1
 
       - name: "Upload Credentials"
         uses: actions/upload-artifact@v4
         with:
           name: rdp-credentials
-          path: rdp-artifacts/
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
           retention-days: 1
           if-no-files-found: warn
 
       - name: "Keep Alive 6 Hours"
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\keepalive.ps1
+        run: .\core\powershell\keepalive.ps1
 
       - name: "Cleanup"
         if: always()
         shell: pwsh
-        run: |
-          . .\rdp_toolkit\core_ps\utils.ps1
-          .\rdp_toolkit\core_ps\cleanup.ps1
+        run: .\core\powershell\cleanup.ps1

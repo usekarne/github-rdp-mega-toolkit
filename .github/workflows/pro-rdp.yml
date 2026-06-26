@@ -42,20 +42,20 @@ jobs:
 
       - name: "Setup RDP"
         shell: pwsh
-        run: .dp_toolkitre_ps\setup-rdp.ps1
+        run: .\core\powershell\setup-rdp.ps1
 
       - name: "Optimize Windows"
         shell: pwsh
-        run: .dp_toolkitre_ps\optimize-windows.ps1
+        run: .\core\powershell\optimize-windows.ps1
 
       - name: "Install Software"
         if: ${{ inputs.install_software }}
         shell: pwsh
-        run: .dp_toolkitre_ps\install-software.ps1
+        run: .\core\powershell\install-software.ps1
 
       - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
         shell: pwsh
-        run: .dp_toolkitre_ps\setup-tunnel.ps1
+        run: .\core\powershell\setup-tunnel.ps1
 
       - name: "Upload Credentials"
         uses: actions/upload-artifact@v4
@@ -85,7 +85,7 @@ jobs:
             Write-Host "Pro session - ${h}h ${m}m remaining"
             if ('${{ inputs.rotate_password }}' -eq 'true' -and ((Get-Date) - $lastRotate).TotalHours -ge 4) {
               Write-Host '--- Rotating password ---'
-              .dp_toolkitre_ps\rotate-password.ps1
+              .\core\powershell\rotate-password.ps1
               $lastRotate = Get-Date
             }
             Start-Sleep -Seconds 300
@@ -94,4 +94,4 @@ jobs:
       - name: "Cleanup"
         if: always()
         shell: pwsh
-        run: .dp_toolkitre_ps\cleanup.ps1
+        run: .\core\powershell\cleanup.ps1

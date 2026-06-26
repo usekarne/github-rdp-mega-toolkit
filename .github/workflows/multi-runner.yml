@@ -64,22 +64,22 @@ jobs:
       - name: "Setup RDP"
         if: steps.skip.outputs.skip != 'true'
         shell: pwsh
-        run: .dp_toolkitre_ps\setup-rdp.ps1
+        run: .\core\powershell\setup-rdp.ps1
 
       - name: "Optimize Windows"
         if: steps.skip.outputs.skip != 'true' && inputs.optimize_profile != 'none'
         shell: pwsh
-        run: .dp_toolkitre_ps\optimize-windows.ps1
+        run: .\core\powershell\optimize-windows.ps1
 
       - name: "Install Software"
         if: steps.skip.outputs.skip != 'true'
         shell: pwsh
-        run: .dp_toolkitre_ps\install-software.ps1
+        run: .\core\powershell\install-software.ps1
 
       - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
         if: steps.skip.outputs.skip != 'true'
         shell: pwsh
-        run: .dp_toolkitre_ps\setup-tunnel.ps1
+        run: .\core\powershell\setup-tunnel.ps1
 
       - name: "Upload Credentials"
         if: steps.skip.outputs.skip != 'true'
@@ -101,9 +101,9 @@ jobs:
       - name: "Keep Alive"
         if: steps.skip.outputs.skip != 'true'
         shell: pwsh
-        run: .dp_toolkitre_ps\keepalive.ps1
+        run: .\core\powershell\keepalive.ps1
 
       - name: "Cleanup"
         if: always() && steps.skip.outputs.skip != 'true'
         shell: pwsh
-        run: .dp_toolkitre_ps\cleanup.ps1
+        run: .\core\powershell\cleanup.ps1
