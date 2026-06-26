@@ -1,0 +1,138 @@
+{
+  "_meta": {
+    "description": "Software catalogue consumed by install-software.ps1 / install-software.sh",
+    "schema": "Each entry: { name, winget?, choco?, apt?, dnf?, pacman?, pkg?, enabled, optional }",
+    "note": "Set enabled=false to skip an entry. Optional entries do not fail the whole install."
+  },
+  "packages": [
+    {
+      "name": "Git",
+      "winget": "Git.Git",
+      "choco": "git",
+      "apt": "git",
+      "dnf": "git",
+      "pacman": "git",
+      "pkg": "git",
+      "enabled": true,
+      "optional": false
+    },
+    {
+      "name": "curl",
+      "winget": "curl.curl",
+      "choco": "curl",
+      "apt": "curl",
+      "dnf": "curl",
+      "pacman": "curl",
+      "pkg": "curl",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "PowerShell 7",
+      "winget": "Microsoft.PowerShell",
+      "choco": "pwsh",
+      "apt": "powershell",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "Windows Terminal",
+      "winget": "Microsoft.WindowsTerminal",
+      "choco": "microsoft-windows-terminal",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "Firefox",
+      "winget": "Mozilla.Firefox",
+      "choco": "firefox",
+      "apt": "firefox-esr",
+      "dnf": "firefox",
+      "pacman": "firefox",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "Visual Studio Code",
+      "winget": "Microsoft.VisualStudioCode",
+      "choco": "vscode",
+      "apt": "code",
+      "dnf": "code",
+      "pacman": "code",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "7-Zip",
+      "winget": "7zip.7zip",
+      "choco": "7zip",
+      "apt": "p7zip-full",
+      "dnf": "p7zip",
+      "pacman": "p7zip",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "VLC",
+      "winget": "VideoLAN.VLC",
+      "choco": "vlc",
+      "apt": "vlc",
+      "dnf": "vlc",
+      "pacman": "vlc",
+      "enabled": false,
+      "optional": true
+    },
+    {
+      "name": "FreeRDP",
+      "winget": "",
+      "choco": "freerdp",
+      "apt": "freerdp2-x11",
+      "dnf": "freerdp",
+      "pacman": "freerdp",
+      "pkg": "freerdp",
+      "enabled": true,
+      "optional": false
+    },
+    {
+      "name": "OpenSSH Client",
+      "winget": "",
+      "choco": "",
+      "apt": "openssh-client",
+      "dnf": "openssh-clients",
+      "pacman": "openssh",
+      "pkg": "openssh",
+      "enabled": true,
+      "optional": false
+    },
+    {
+      "name": "htop",
+      "winget": "",
+      "choco": "",
+      "apt": "htop",
+      "dnf": "htop",
+      "pacman": "htop",
+      "pkg": "htop",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "jq",
+      "winget": "jqlang.jq",
+      "choco": "jq",
+      "apt": "jq",
+      "dnf": "jq",
+      "pacman": "jq",
+      "pkg": "jq",
+      "enabled": true,
+      "optional": true
+    },
+    {
+      "name": "cloudflared",
+      "winget": "Cloudflare.cloudflared",
+      "choco": "cloudflared",
+      "apt": "cloudflared",
+      "enabled": true,
+      "optional": true
+    }
+  ]
+}

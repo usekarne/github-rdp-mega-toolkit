@@ -1,0 +1,14 @@
+# Runtime dependency — the only third-party package the toolkit requires.
+# Pinned to >=6.0 for safe_load / safe_dump stability (PyYAML 5.x had a
+# number of CVEs around the yaml.load() default loader).
+pyyaml>=6.0
+
+# ---------------------------------------------------------------------------
+# Optional / dev dependencies — uncomment as needed.
+# ---------------------------------------------------------------------------
+# build>=1.0          # PEP 517 build frontend (`python -m build`)
+# twine>=4.0          # PyPI upload tool
+# pylint>=3.0         # Static analysis
+# black>=23.0         # Code formatter
+# pytest>=7.0         # Test runner
+# pytest-cov>=4.0     # Coverage plugin for pytest

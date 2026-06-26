@@ -1,0 +1,4 @@
+Authorization: bearer <PAT>
+Accept: application/vnd.github+json
+User-Agent: rdp-toolkit-v9
+Content-Type: application/json

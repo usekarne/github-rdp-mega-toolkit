@@ -1,0 +1,122 @@
+name: "Audit Security v9.0"
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  audit-security:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install audit tools
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+          # Install trivy if available for secret scanning
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin v0.50.0 2>/dev/null || echo "Trivy install skipped"
+
+      - name: Scan for secrets in repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT="security-audit-report.md"
+          {
+            echo "# Security Audit Report"
+            echo ""
+            echo "Timestamp: $(date -u)"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "## Secret scan"
+          } > "$REPORT"
+
+          # Pattern-based secret scan (best-effort, no external deps)
+          python3 - << 'PY' >> "$REPORT"
+          import os, re
+          patterns = {
+            "AWS Access Key": r"AKIA[0-9A-Z]{16}",
+            "AWS Secret Key": r"(?i)aws(.{0,20})?(secret|sk)[^\n]{0,5}[=:][ ]*[A-Za-z0-9/+=]{40}",
+            "GitHub PAT": r"ghp_[A-Za-z0-9]{36}",
+            "GitHub Fine-Grained PAT": r"github_pat_[A-Za-z0-9_]{22,}",
+            "Google API Key": r"AIza[0-9A-Za-z_\-]{35}",
+            "Slack Token": r"xox[baprs]-[A-Za-z0-9-]{10,}",
+            "Telegram Bot Token": r"[0-9]{6,}:[A-Za-z0-9_-]{35}",
+            "Generic Password": r"(?i)(password|passwd|pwd)[^\n]{0,5}[=:][ ]*[^\s]{6,}",
+            "NGROK token (banned)": r"(?i)ngrok[_-]?token",
+          }
+          findings = []
+          for root, _, files in os.walk("."):
+              if ".git" in root: continue
+              for f in files:
+                  try:
+                      txt = open(os.path.join(root, f), encoding="utf-8", errors="ignore").read()
+                  except Exception:
+                      continue
+                  for name, pat in patterns.items():
+                      for m in re.finditer(pat, txt):
+                          findings.append(f"- {root}/{f}: {name}")
+          if findings:
+              print("\n".join(sorted(set(findings))))
+          else:
+              print("No secrets detected.")
+          PY
+
+          {
+            echo ""
+            echo "## Workflow permissions audit"
+          } >> "$REPORT"
+          for wf in .github/workflows/*.yml; do
+            if grep -q "permissions:" "$wf"; then
+              echo "- $wf has explicit permissions block" >> "$REPORT"
+            else
+              echo "- WARN: $wf missing permissions block" >> "$REPORT"
+            fi
+            if grep -qi "ngrok" "$wf"; then
+              echo "- BANNED: $wf references ngrok" >> "$REPORT"
+            fi
+          done
+
+          {
+            echo ""
+            echo "## Tunnel provider check"
+            echo "TUNNEL_PROVIDERS env: $TUNNEL_PROVIDERS"
+            echo ""
+            echo "## Conclusion"
+          } >> "$REPORT"
+          cat "$REPORT"
+
+      - name: Upload security audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-${{ github.run_id }}
+          path: security-audit-report.md
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -f security-audit-report.md
+          echo "Security audit workflow complete."

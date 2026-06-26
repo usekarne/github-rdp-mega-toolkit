@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+pkill -f 'rdp-toolkit' 2>/dev/null || true
+pkill -f 'cloudflared.*localhost:33890' 2>/dev/null || true
+echo "Stopping active toolkit processes..."

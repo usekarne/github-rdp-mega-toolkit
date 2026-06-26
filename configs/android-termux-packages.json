@@ -1,0 +1,40 @@
+{
+  "version": "9.0.0",
+  "description": "Termux packages for Android installations of RDP Mega Toolkit v9.0. Used by setup-termux.sh and the Android client tooling.",
+  "categories": {
+    "core": [
+      { "id": "openssh",    "provider": "pkg", "enabled": true,  "comment": "SSH client (for tunnels)" },
+      { "id": "curl",       "provider": "pkg", "enabled": true,  "comment": "HTTP client" },
+      { "id": "wget",       "provider": "pkg", "enabled": true,  "comment": "HTTP downloader" },
+      { "id": "git",        "provider": "pkg", "enabled": true,  "comment": "Version control" },
+      { "id": "jq",         "provider": "pkg", "enabled": true,  "comment": "JSON processor" },
+      { "id": "tmux",       "provider": "pkg", "enabled": false, "comment": "Terminal multiplexer" },
+      { "id": "nano",       "provider": "pkg", "enabled": false, "comment": "Editor" },
+      { "id": "vim",        "provider": "pkg", "enabled": false, "comment": "Editor" }
+    ],
+    "runtimes": [
+      { "id": "python",     "provider": "pkg", "enabled": true,  "comment": "Python 3 runtime" },
+      { "id": "nodejs",     "provider": "pkg", "enabled": false, "comment": "Node.js runtime" },
+      { "id": "ruby",       "provider": "pkg", "enabled": false, "comment": "Ruby runtime" },
+      { "id": "golang",     "provider": "pkg", "enabled": false, "comment": "Go runtime" }
+    ],
+    "network": [
+      { "id": "nmap",       "provider": "pkg", "enabled": false, "comment": "Network scanner" },
+      { "id": "netcat",     "provider": "pkg", "enabled": true,  "comment": "Netcat" },
+      { "id": "socat",      "provider": "pkg", "enabled": false, "comment": "Bidirectional data transfer" },
+      { "id": "rsync",      "provider": "pkg", "enabled": false, "comment": "Remote sync" },
+      { "id": "termux-api", "provider": "pkg", "enabled": true,  "comment": "Android API bridge" }
+    ],
+    "pip": [
+      { "id": "requests",       "provider": "pip", "enabled": true,  "comment": "HTTP library" },
+      { "id": "pyyaml",         "provider": "pip", "enabled": true,  "comment": "YAML parser" },
+      { "id": "cryptography",   "provider": "pip", "enabled": false, "comment": "Crypto primitives" },
+      { "id": "rich",           "provider": "pip", "enabled": true,  "comment": "Terminal formatting" }
+    ]
+  },
+  "global": {
+    "pkg_update_first": true,
+    "skip_on_failure": true,
+    "log_path": "/data/data/com.termux/files/home/.rdp-mega/termux-install.log"
+  }
+}

@@ -1,0 +1,299 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  =====================================================================
+  GitHub RDP Mega Toolkit v9.0.0 — WiX Toolset source (.wxs)
+  =====================================================================
+  Builds a Windows Installer .msi package using WiX Toolset v3.x or v4.x.
+  Prerequisites:
+    * WiX Toolset 3.11+ (https://wixtoolset.org/releases/)
+    * candle.exe + light.exe on PATH (or install Wix Toolset Visual Studio
+      extension and use the build-msi.ps1 helper).
+
+  Build (manual):
+      candle.exe -nologo GitHubRDPToolkit.wxs -out GitHubRDPToolkit.wixobj
+      light.exe  -nologo GitHubRDPToolkit.wixobj -out GitHubRDPToolkit-9.0.0.msi
+
+  Or use the helper:
+      powershell -ExecutionPolicy Bypass -File build-msi.ps1
+
+  Notes:
+    * InstallDir is "ProgramFiles64Folder\GitHubRDPToolkit" on 64-bit Windows.
+    * Uninstaller is registered under HKLM Uninstall key (visible in
+      Add/Remove Programs / Apps & features).
+    * All PATH updates are performed via the WriteFileData/XmlConfig pattern
+      is NOT used here — we add a registry-based App Path entry instead, which
+      is the recommended WiX-friendly approach (no shell PATH mutation).
+  =====================================================================
+-->
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+    <Product Id='*'
+             Name='GitHub RDP Mega Toolkit'
+             Language='1033'
+             Version='9.0.0'
+             Manufacturer='usekarne'
+             UpgradeCode='8E5B7C2A-1F4D-4B6C-9E8A-3D2F1A4B5C6D'>
+
+        <Package Id='*'
+                 Keywords='Installer;RDP;GitHub;Toolkit'
+                 Description='GitHub RDP Mega Toolkit 9.0.0 Installer'
+                 Comments='Cross-platform RDP automation toolkit. https://github.com/usekarne/github-rdp-mega-toolkit'
+                 Manufacturer='usekarne'
+                 InstallerVersion='405'
+                 Languages='1033'
+                 Compressed='yes'
+                 InstallScope='perMachine'
+                 InstallPrivileges='elevated' />
+
+        <!-- Major upgrade support (allow same UpgradeCode to be replaced) -->
+        <MajorUpgrade DowngradeErrorMessage='A newer version of GitHub RDP Mega Toolkit is already installed.'
+                      AllowSameVersionUpgrades='yes' />
+
+        <Media Id='1' Cabinet='GitHubRDPToolkit.cab' EmbedCab='yes' />
+
+        <!-- Feature tree -->
+        <Feature Id='Complete'
+                 Title='GitHub RDP Mega Toolkit'
+                 Description='Complete installation of the GitHub RDP Mega Toolkit.'
+                 Level='1'
+                 ConfigurableDirectory='INSTALLDIR'
+                 Display='expand'>
+
+            <Feature Id='CoreFeature' Title='Core Files' Description='Core scripts, configs, docs.' Level='1' AllowAdvertise='no'>
+                <ComponentGroupRef Id='CoreFiles' />
+            </Feature>
+
+            <Feature Id='ScriptsFeature' Title='Windows Scripts' Description='PowerShell scripts for Windows clients.' Level='1' AllowAdvertise='no'>
+                <ComponentGroupRef Id='WindowsScripts' />
+            </Feature>
+
+            <Feature Id='ConfigsFeature' Title='Windows Configs' Description='Registry, firewall, and RDP template files.' Level='1' AllowAdvertise='no'>
+                <ComponentGroupRef Id='WindowsConfigs' />
+            </Feature>
+
+            <Feature Id='ShortcutsFeature' Title='Start Menu + Desktop Shortcuts' Description='Create shortcuts.' Level='1' AllowAdvertise='no'>
+                <ComponentRef Id='StartMenuShortcuts' />
+                <ComponentRef Id='DesktopShortcut' />
+            </Feature>
+
+            <Feature Id='PathFeature' Title='Add to PATH (App Paths)' Description='Register install directory in App Paths registry key.' Level='1' AllowAdvertise='no'>
+                <ComponentRef Id='AppPathsReg' />
+            </Feature>
+        </Feature>
+
+        <!-- UI -->
+        <UIRef Id='WixUI_InstallDir' />
+        <UIRef Id='WixUI_FeatureTree' />
+        <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+        <Property Id='ARPURLINFOABOUT'  Value='https://github.com/usekarne/github-rdp-mega-toolkit' />
+        <Property Id='ARPHELPLINK'      Value='https://github.com/usekarne/github-rdp-mega-toolkit/issues' />
+        <Property Id='ARPURLUPDATEINFO' Value='https://github.com/usekarne/github-rdp-mega-toolkit/releases' />
+
+        <!-- Directory layout -->
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='ProgramFiles64Folder' Name='PFiles64'>
+                <Directory Id='INSTALLDIR' Name='GitHubRDPToolkit'>
+                    <Directory Id='BinDir'      Name='bin' />
+                    <Directory Id='ConfigsDir'  Name='configs' />
+                    <Directory Id='ScriptsDir'  Name='scripts' />
+                    <Directory Id='DocsDir'     Name='docs' />
+                    <Directory Id='PlatformsDir' Name='platforms'>
+                        <Directory Id='WinDir' Name='windows'>
+                            <Directory Id='WinScriptsDir' Name='scripts' />
+                            <Directory Id='WinConfigsDir' Name='configs' />
+                        </Directory>
+                    </Directory>
+                </Directory>
+            </Directory>
+
+            <!-- Start Menu -->
+            <Directory Id='ProgramMenuFolder' Name='ProgMenu'>
+                <Directory Id='StartMenuDir' Name='GitHubRDPToolkit' />
+            </Directory>
+
+            <!-- Desktop -->
+            <Directory Id='DesktopFolder' Name='Desktop' />
+        </Directory>
+
+        <!-- ===================================================================== -->
+        <!-- Core files: version.txt, README.md, LICENSE                            -->
+        <!-- ===================================================================== -->
+        <ComponentGroup Id='CoreFiles' Directory='INSTALLDIR'>
+            <Component Id='VersionTxt' Guid='A1A1A1A1-1111-1111-1111-111111111111' Win64='yes'>
+                <File Id='VersionTxtFile' Name='version.txt' Source='$(env.SOURCE_ROOT)\version.txt' KeyPath='yes' />
+            </Component>
+            <Component Id='ReadmeMd' Guid='A1A1A1A1-1111-1111-1111-111111112222' Win64='yes'>
+                <File Id='ReadmeMdFile' Name='README.md' Source='$(env.SOURCE_ROOT)\README.md' KeyPath='yes' />
+            </Component>
+            <Component Id='LicenseFile' Guid='A1A1A1A1-1111-1111-1111-111111113333' Win64='yes'>
+                <File Id='LicenseFileData' Name='LICENSE' Source='$(env.SOURCE_ROOT)\LICENSE' KeyPath='yes' />
+            </Component>
+            <Component Id='InstallPs1' Guid='A1A1A1A1-1111-1111-1111-111111114444' Win64='yes'>
+                <File Id='InstallPs1File' Name='install.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\installer\install.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='UninstallPs1' Guid='A1A1A1A1-1111-1111-1111-111111115555' Win64='yes'>
+                <File Id='UninstallPs1File' Name='uninstall.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\installer\uninstall.ps1' KeyPath='yes' />
+            </Component>
+        </ComponentGroup>
+
+        <!-- ===================================================================== -->
+        <!-- Windows scripts                                                        -->
+        <!-- ===================================================================== -->
+        <ComponentGroup Id='WindowsScripts' Directory='WinScriptsDir'>
+            <Component Id='SetupWindowsClient' Guid='B2B2B2B2-2222-2222-2222-222222222201' Win64='yes'>
+                <File Id='SetupWindowsClientFile' Name='setup-windows-client.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\setup-windows-client.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='ConnectMstsc' Guid='B2B2B2B2-2222-2222-2222-222222222202' Win64='yes'>
+                <File Id='ConnectMstscFile' Name='connect-mstsc.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\connect-mstsc.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='ConnectXfreerdp' Guid='B2B2B2B2-2222-2222-2222-222222222203' Win64='yes'>
+                <File Id='ConnectXfreerdpFile' Name='connect-xfreerdp.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\connect-xfreerdp.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='TunnelBridgeWindows' Guid='B2B2B2B2-2222-2222-2222-222222222204' Win64='yes'>
+                <File Id='TunnelBridgeWindowsFile' Name='tunnel-bridge-windows.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\tunnel-bridge-windows.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='FetchCredsWindows' Guid='B2B2B2B2-2222-2222-2222-222222222205' Win64='yes'>
+                <File Id='FetchCredsWindowsFile' Name='fetch-creds-windows.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\fetch-creds-windows.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='AutoStartTunnel' Guid='B2B2B2B2-2222-2222-2222-222222222206' Win64='yes'>
+                <File Id='AutoStartTunnelFile' Name='auto-start-tunnel.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\auto-start-tunnel.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='UninstallCredentials' Guid='B2B2B2B2-2222-2222-2222-222222222207' Win64='yes'>
+                <File Id='UninstallCredentialsFile' Name='uninstall-credentials.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\uninstall-credentials.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='DefenderAllow' Guid='B2B2B2B2-2222-2222-2222-222222222208' Win64='yes'>
+                <File Id='DefenderAllowFile' Name='windows-defender-allow.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\windows-defender-allow.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='FirewallAllow' Guid='B2B2B2B2-2222-2222-2222-222222222209' Win64='yes'>
+                <File Id='FirewallAllowFile' Name='windows-firewall-allow.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\windows-firewall-allow.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='EventLogSetup' Guid='B2B2B2B2-2222-2222-2222-22222222220A' Win64='yes'>
+                <File Id='EventLogSetupFile' Name='windows-eventlog-setup.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\scripts\windows-eventlog-setup.ps1' KeyPath='yes' />
+            </Component>
+        </ComponentGroup>
+
+        <!-- ===================================================================== -->
+        <!-- Windows configs                                                        -->
+        <!-- ===================================================================== -->
+        <ComponentGroup Id='WindowsConfigs' Directory='WinConfigsDir'>
+            <Component Id='RdpRegistry' Guid='C3C3C3C3-3333-3333-3333-333333333301' Win64='yes'>
+                <File Id='RdpRegistryFile' Name='windows-rdp-registry.reg' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-rdp-registry.reg' KeyPath='yes' />
+            </Component>
+            <Component Id='FirewallRules' Guid='C3C3C3C3-3333-3333-3333-333333333302' Win64='yes'>
+                <File Id='FirewallRulesFile' Name='rdp-firewall-rules.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\rdp-firewall-rules.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='PowerPlan' Guid='C3C3C3C3-3333-3333-3333-333333333303' Win64='yes'>
+                <File Id='PowerPlanFile' Name='windows-power-plan.pow' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-power-plan.pow' KeyPath='yes' />
+            </Component>
+            <Component Id='ServicesRegistry' Guid='C3C3C3C3-3333-3333-3333-333333333304' Win64='yes'>
+                <File Id='ServicesRegistryFile' Name='windows-services-registry.reg' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-services-registry.reg' KeyPath='yes' />
+            </Component>
+            <Component Id='DefenderExclusions' Guid='C3C3C3C3-3333-3333-3333-333333333305' Win64='yes'>
+                <File Id='DefenderExclusionsFile' Name='windows-defender-exclusions.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-defender-exclusions.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='VisualEffects' Guid='C3C3C3C3-3333-3333-3333-333333333306' Win64='yes'>
+                <File Id='VisualEffectsFile' Name='windows-visual-effects.reg' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-visual-effects.reg' KeyPath='yes' />
+            </Component>
+            <Component Id='Startup' Guid='C3C3C3C3-3333-3333-3333-333333333307' Win64='yes'>
+                <File Id='StartupFile' Name='windows-startup.ps1' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\windows-startup.ps1' KeyPath='yes' />
+            </Component>
+            <Component Id='MstscTemplate' Guid='C3C3C3C3-3333-3333-3333-333333333308' Win64='yes'>
+                <File Id='MstscTemplateFile' Name='mstsc-template.rdp' Source='$(env.SOURCE_ROOT)\platforms\windows\configs\mstsc-template.rdp' KeyPath='yes' />
+            </Component>
+        </ComponentGroup>
+
+        <!-- ===================================================================== -->
+        <!-- Start Menu shortcuts                                                   -->
+        <!-- ===================================================================== -->
+        <DirectoryRef Id='StartMenuDir'>
+            <Component Id='StartMenuShortcuts' Guid='D4D4D4D4-4444-4444-4444-444444444401' Win64='yes'>
+                <Shortcut Id='StartMenuConsoleLnk'
+                          Name='GitHub RDP Toolkit Console'
+                          Description='Open a toolkit console.'
+                          Target='[SystemFolder]powershell.exe'
+                          Arguments='-NoExit -Command "& { Set-Location ''[INSTALLDIR]''; Write-Host ''GitHub RDP Mega Toolkit — ready.'' }"'
+                          WorkingDirectory='INSTALLDIR' />
+                <Shortcut Id='StartMenuUninstallLnk'
+                          Name='Uninstall GitHub RDP Toolkit'
+                          Description='Run the uninstaller.'
+                          Target='[SystemFolder]powershell.exe'
+                          Arguments='-NoProfile -ExecutionPolicy Bypass -File "[INSTALLDIR]uninstall.ps1"'
+                          WorkingDirectory='INSTALLDIR' />
+                <RemoveFolder Id='RemoveStartMenuDir' Directory='StartMenuDir' On='uninstall' />
+                <RegistryValue Root='HKCU' Key='Software\usekarne\GitHubRDPToolkit\Shortcuts\StartMenu' Name='installed' Type='integer' Value='1' KeyPath='yes' />
+            </Component>
+        </DirectoryRef>
+
+        <!-- ===================================================================== -->
+        <!-- Desktop shortcut                                                      -->
+        <!-- ===================================================================== -->
+        <DirectoryRef Id='DesktopFolder'>
+            <Component Id='DesktopShortcut' Guid='D4D4D4D4-4444-4444-4444-444444444402' Win64='yes'>
+                <Shortcut Id='DesktopConsoleLnk'
+                          Name='GitHub RDP Toolkit'
+                          Description='Open a toolkit console.'
+                          Target='[SystemFolder]powershell.exe'
+                          Arguments='-NoExit -Command "& { Set-Location ''[INSTALLDIR]''; Write-Host ''GitHub RDP Mega Toolkit — ready.'' }"'
+                          WorkingDirectory='INSTALLDIR' />
+                <RegistryValue Root='HKCU' Key='Software\usekarne\GitHubRDPToolkit\Shortcuts\Desktop' Name='installed' Type='integer' Value='1' KeyPath='yes' />
+            </Component>
+        </DirectoryRef>
+
+        <!-- ===================================================================== -->
+        <!-- App Paths registry entry (so 'GitHubRDPToolkit' resolves on PATH)     -->
+        <!-- ===================================================================== -->
+        <Component Id='AppPathsReg' Directory='TARGETDIR' Guid='D4D4D4D4-4444-4444-4444-444444444403' Win64='yes'>
+            <RegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\GitHubRDPToolkit.exe' ForceCreateOnInstall='yes' ForceDeleteOnUninstall='yes'>
+                <RegistryValue Type='string' Value='[INSTALLDIR]bin\GitHubRDPToolkit.exe' />
+                <RegistryValue Type='string' Name='Path' Value='[INSTALLDIR]bin' />
+            </RegistryKey>
+        </Component>
+
+        <!-- ===================================================================== -->
+        <!-- Uninstall registry entry (Add/Remove Programs)                        -->
+        <!-- ===================================================================== -->
+        <DirectoryRef Id='TARGETDIR'>
+            <Component Id='UninstallRegEntry' Guid='D4D4D4D4-4444-4444-4444-444444444404' Win64='yes'>
+                <RegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GitHubRDPToolkit' ForceCreateOnInstall='yes' ForceDeleteOnUninstall='yes'>
+                    <RegistryValue Type='string' Name='DisplayName'      Value='GitHub RDP Mega Toolkit' />
+                    <RegistryValue Type='string' Name='DisplayVersion'   Value='9.0.0' />
+                    <RegistryValue Type='string' Name='Publisher'        Value='usekarne' />
+                    <RegistryValue Type='string' Name='URLInfoAbout'     Value='https://github.com/usekarne/github-rdp-mega-toolkit' />
+                    <RegistryValue Type='string' Name='HelpLink'         Value='https://github.com/usekarne/github-rdp-mega-toolkit/issues' />
+                    <RegistryValue Type='string' Name='InstallLocation'  Value='[INSTALLDIR]' />
+                    <RegistryValue Type='string' Name='InstallDate'      Value='[Date]' />
+                    <RegistryValue Type='string' Name='DisplayIcon'      Value='[SystemFolder]powershell.exe,0' />
+                    <RegistryValue Type='string' Name='UninstallString'  Value='[SystemFolder]powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLDIR]uninstall.ps1&quot;' />
+                    <RegistryValue Type='string' Name='QuietUninstallString' Value='[SystemFolder]powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLDIR]uninstall.ps1&quot;' />
+                    <RegistryValue Type='integer' Name='NoModify'  Value='1' />
+                    <RegistryValue Type='integer' Name='NoRepair'  Value='1' />
+                    <RegistryValue Type='integer' Name='VersionMajor' Value='9' />
+                    <RegistryValue Type='integer' Name='VersionMinor' Value='0' />
+                </RegistryKey>
+            </Component>
+        </DirectoryRef>
+
+        <!-- Attach uninstall registry to main feature -->
+        <FeatureRef Id='CoreFeature'>
+            <ComponentRef Id='UninstallRegEntry' />
+        </FeatureRef>
+
+        <!-- ===================================================================== -->
+        <!-- Custom action to run install.ps1 after files are copied               -->
+        <!-- ===================================================================== -->
+        <CustomAction Id='RunInstallPs1'
+                      BinaryKey='WixCA'
+                      DllEntry='WixQuietExec'
+                      Execute='deferred'
+                      Impersonate='no'
+                      Return='ignore' />
+        <CustomAction Id='RunInstallPs1Prop'
+                      Property='RunInstallPs1'
+                      Value='&quot;[SystemFolder]powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLDIR]install.ps1&quot; -NoShortcuts -NoPath -Force' />
+
+        <InstallExecuteSequence>
+            <Custom Action='RunInstallPs1Prop' After='InstallFiles'>(NOT Installed) AND (NOT REMOVE)</Custom>
+            <Custom Action='RunInstallPs1'     After='RunInstallPs1Prop'>(NOT Installed) AND (NOT REMOVE)</Custom>
+        </InstallExecuteSequence>
+
+    </Product>
+</Wix>

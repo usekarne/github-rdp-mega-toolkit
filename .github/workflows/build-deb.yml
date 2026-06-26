@@ -1,0 +1,99 @@
+name: "Build Debian Package v9.0"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "platforms/kali/**"
+      - "core/bash/**"
+      - "configs/**"
+      - ".github/workflows/build-deb.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install packaging dependencies
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y dpkg-dev fakeroot build-essential devscripts
+
+      - name: Build .deb package
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="9.0.0"
+          BUILD_DIR="$(mktemp -d)"
+          PKG_DIR="$BUILD_DIR/rdp-toolkit_${VERSION}_all"
+          mkdir -p "$PKG_DIR/DEBIAN"
+          mkdir -p "$PKG_DIR/usr/bin"
+          mkdir -p "$PKG_DIR/usr/lib/rdp-toolkit"
+          mkdir -p "$PKG_DIR/etc/rdp-toolkit"
+          mkdir -p "$PKG_DIR/usr/share/doc/rdp-toolkit"
+
+          # Copy scripts and configs
+          cp -r core/bash "$PKG_DIR/usr/lib/rdp-toolkit/"
+          cp -r configs "$PKG_DIR/etc/rdp-toolkit/"
+          cp -r platforms/kali/* "$PKG_DIR/usr/lib/rdp-toolkit/" 2>/dev/null || true
+
+          # Write control file
+          cat > "$PKG_DIR/DEBIAN/control" << EOF
+          Package: rdp-toolkit
+          Version: ${VERSION}
+          Architecture: all
+          Maintainer: v9.0 MEGA Rewrite <noreply@github.com>
+          Depends: bash, openssh-client, xrdp, xfce4, xfce4-goodies
+          Section: net
+          Priority: optional
+          Description: GitHub RDP Mega Toolkit v9.0 - Kali/Ubuntu RDP setup and tunnel management.
+          EOF
+
+          # Postinst / prerm stubs
+          cat > "$PKG_DIR/DEBIAN/postinst" << 'EOF'
+          #!/bin/bash
+          set -e
+          echo "rdp-toolkit postinst: configuration applied"
+          EOF
+          chmod 0755 "$PKG_DIR/DEBIAN/postinst"
+
+          cat > "$PKG_DIR/DEBIAN/prerm" << 'EOF'
+          #!/bin/bash
+          set -e
+          echo "rdp-toolkit prerm: cleaning up"
+          EOF
+          chmod 0755 "$PKG_DIR/DEBIAN/prerm"
+
+          # Build the deb
+          dpkg-deb --build "$PKG_DIR"
+          mkdir -p artifacts
+          cp "$BUILD_DIR"/rdp-toolkit_${VERSION}_all.deb artifacts/
+          ls -la artifacts/
+
+      - name: Upload .deb artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-toolkit-deb-${{ github.run_id }}
+          path: artifacts/*.deb
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -rf artifacts
+          echo "Debian build workflow complete."

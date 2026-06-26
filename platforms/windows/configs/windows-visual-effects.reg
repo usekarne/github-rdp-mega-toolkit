@@ -1,0 +1,122 @@
+Windows Registry Editor Version 5.00
+
+; =====================================================================
+; GitHub RDP Mega Toolkit v9.0.0
+; Windows Visual Effects Registry Tweaks
+; =====================================================================
+; Purpose:
+;   Set the visual effects to "Best performance" + disable animations
+;   that interfere with RDP session smoothness over high-latency
+;   tunnels. Also disables transparency, font smoothing off is left
+;   ON (better text clarity over remote sessions).
+;
+; Apply:
+;   reg import windows-visual-effects.reg
+;   Sign out + sign back in for changes to take effect.
+;
+; Reverse:
+;   Set "UserPreferencesMask"=hex:9e,1e,07,80,12,00,00,00 (default Win10)
+;   and VisualFXSetting=0 (let Windows choose).
+; =====================================================================
+
+; ----------------------------------------------------------------------
+; VisualFXSetting:
+;   0 = Let Windows choose what's best for my computer
+;   1 = Adjust for best appearance
+;   2 = Adjust for best performance
+;   3 = Custom
+; We set to 3 (Custom) and tweak individual effects below.
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects]
+"VisualFXSetting"=dword:00000003
+
+; ----------------------------------------------------------------------
+; UserPreferencesMask — bitmask of visual effect settings.
+; Default (best performance): all bits cleared except essential ones.
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"UserPreferencesMask"=hex:90,12,01,80,10,00,00,00
+
+; ----------------------------------------------------------------------
+; Disable menu animation (faster menu response over RDP)
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"MenuShowDelay"="0"
+
+; ----------------------------------------------------------------------
+; Disable window animations (drag/restore)
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics]
+"MinAnimate"="0"
+
+; ----------------------------------------------------------------------
+; Disable cursor blink (saves bandwidth)
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"CursorBlinkRate"="-1"
+
+; ----------------------------------------------------------------------
+; Disable combo box animation
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"SmoothScroll"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable listview shadow
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+"ListviewShadow"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable taskbar animations
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+"TaskbarAnimations"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable transparency
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize]
+"EnableTransparency"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Keep font smoothing ON (ClearType) — improves text readability over RDP
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"FontSmoothing"="2"
+"FontSmoothingType"=dword:00000002
+
+; ----------------------------------------------------------------------
+; Keep "Show thumbnails instead of icons" ON for usability.
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+"IconsOnly"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable "Show window contents while dragging" (saves bandwidth)
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"DragFullWindows"="0"
+
+; ----------------------------------------------------------------------
+; Disable mouse shadow
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Mouse]
+"MouseTrails"="0"
+"SnapToDefaultButton"="0"
+"MouseHoverTime"="0"
+
+; ----------------------------------------------------------------------
+; Disable tooltips fade + slide
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
+"FadeTaskbarOverflow"=dword:00000000
+"ExtendedUIHoverTime"=dword:00000000
+"ExtendedMiscUIHoverTime"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable "Animate windows when minimizing and maximizing"
+; ----------------------------------------------------------------------
+[HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics]
+"WindowArrangementActive"="0"
+"MinAnimate"="0"

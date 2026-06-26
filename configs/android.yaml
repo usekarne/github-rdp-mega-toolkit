@@ -1,0 +1,97 @@
+# =============================================================================
+# android.yaml — Termux (Android) overrides on top of configs/default.yaml.
+#
+# Android runs Termux, which is essentially a minimal Linux userland running
+# as a regular Android app. No root, no systemd, no Docker. We keep the
+# install list lean (Termux has limited storage + bandwidth on mobile data)
+# and pin the minimal profile because RDP-over-mobile is bandwidth-constrained.
+# =============================================================================
+
+version: "9.0.0"
+platform: android
+profile: minimal                  # Mobile bandwidth — strip all the eye candy
+
+session:
+  hours: 2                        # Shorter default — mobile battery / data
+  username: termux
+  password: ""
+  domain: ""
+
+# LocalTunnel works well on mobile because it's HTTP-based and survives
+# cellular NAT handovers better than raw TCP. Cloudflare is a strong second.
+tunnel:
+  priority:
+    - localtunnel
+    - cloudflare
+    - serveo
+    - localhost.run
+
+# Termux packages — installed via `pkg` (which is a thin wrapper around apt).
+# We deliberately omit the kali-linux-large metapackage (too big for mobile)
+# and any package that needs root or systemd.
+software:
+  - termux-api
+  - openssh
+  - socat
+  - curl
+  - jq
+  - htop
+  - git
+  - nano
+  - freerdp
+
+# Minimal profile — strip aero / themes / wallpaper / window-drag / menu
+# animations. 16-bit colour. Smaller resolution.
+rdp:
+  description: "Lightweight profile for slow links / Termux (Android)"
+  xfreerdp_args:
+    - "/cert:ignore"
+    - "-aero"
+    - "-themes"
+    - "-wallpaper"
+    - "-window-drag"
+    - "-menu-anims"
+    - "/compression-level:2"
+  resolution: "1280x720"
+  color_depth: 16
+  audio: "off"
+
+# Notifications are especially useful on Android — push to Telegram so the
+# user gets a notification when their session is ready.
+notify:
+  telegram:
+    enabled: false                # flip to true and fill in bot_token + chat_id
+    bot_token: ""
+    chat_id: ""
+  discord:
+    enabled: false
+    webhook_url: ""
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 587
+    to: ""
+
+# No Docker on Android — Termux cannot run the Docker daemon (no root, no
+# kernel module). VM management commands will return a friendly error.
+vm:
+  enabled: false
+  default: kali                   # still set so `vm start` produces a clear error
+  docker_image_prefix: "rdp-toolkit/"
+  compose_file: "docker/docker-compose.yml"
+  healthcheck_timeout: 60
+
+github:
+  repo: "usekarne/github-rdp-mega-toolkit"
+  branch: "main"
+  workflow: "android-rdp.yml"     # use the Android-specific workflow
+  rotate_workflow: "credential-rotate.yml"
+  credentials_artifact: "rdp-credentials"
+  api_url: "https://api.github.com"
+  pat_env_var: "GH_PAT"
+
+# Termux-specific paths — used by setup-termux.sh and the platforms.android module.
+paths:
+  install_dir:    "$PREFIX/share/rdp-toolkit"
+  config_dir:     "$HOME/.config/rdp-toolkit"
+  completions_dir: "$PREFIX/share/bash-completion/completions"

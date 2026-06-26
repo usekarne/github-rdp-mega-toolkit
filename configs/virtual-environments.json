@@ -1,0 +1,98 @@
+{
+  "version": "9.0.0",
+  "description": "Virtual environment configurations (Docker, Vagrant, Podman) used for local replication of the RDP Mega Toolkit environments without GitHub Actions.",
+  "providers": {
+    "docker": {
+      "enabled": true,
+      "compose_file": "docker/docker-compose.yml",
+      "images": {
+        "windows-rdp": {
+          "image": "rdp-mega/windows-rdp:9.0",
+          "dockerfile": "docker/windows-rdp/Dockerfile",
+          "ports": ["3389:3389"],
+          "volumes": [
+            "windows-rdp-home:/home/runner",
+            "windows-rdp-data:/data"
+          ],
+          "env": {
+            "TUNNEL_PROVIDERS": "serveo,localhost.run,cloudflare",
+            "RDP_PROFILE": "productivity"
+          }
+        },
+        "ubuntu-rdp": {
+          "image": "rdp-mega/ubuntu-rdp:9.0",
+          "dockerfile": "docker/ubuntu-rdp/Dockerfile",
+          "ports": ["3390:3389"],
+          "volumes": [
+            "ubuntu-rdp-home:/home/rdpuser"
+          ],
+          "env": {
+            "TUNNEL_PROVIDERS": "serveo,localhost.run,cloudflare",
+            "RDP_PROFILE": "minimal"
+          }
+        },
+        "kali-rdp": {
+          "image": "rdp-mega/kali-rdp:9.0",
+          "dockerfile": "docker/kali-rdp/Dockerfile",
+          "ports": ["3391:3389"],
+          "volumes": [
+            "kali-rdp-home:/root",
+            "kali-rdp-tools:/opt/kali-tools"
+          ],
+          "env": {
+            "TUNNEL_PROVIDERS": "serveo,localhost.run,cloudflare",
+            "RDP_PROFILE": "kali"
+          }
+        }
+      },
+      "network": {
+        "name": "rdp-mega-net",
+        "driver": "bridge"
+      }
+    },
+    "vagrant": {
+      "enabled": false,
+      "boxes": {
+        "windows-10": {
+          "box": "gusztavvargadr/windows-10",
+          "cpus": 2,
+          "memory": 4096,
+          "forwarded_ports": [
+            { "guest": 3389, "host": 3389 }
+          ],
+          "provision_script": "platforms/windows/vagrant-bootstrap.ps1"
+        },
+        "ubuntu-22": {
+          "box": "ubuntu/jammy64",
+          "cpus": 2,
+          "memory": 2048,
+          "forwarded_ports": [
+            { "guest": 3389, "host": 3390 }
+          ],
+          "provision_script": "platforms/kali/vagrant-bootstrap.sh"
+        }
+      }
+    },
+    "podman": {
+      "enabled": false,
+      "images": {
+        "ubuntu-rdp": {
+          "image": "rdp-mega/ubuntu-rdp:9.0",
+          "podmanfile": "podman/ubuntu-rdp.Containerfile",
+          "ports": ["3392:3389"],
+          "volumes": [
+            "ubuntu-rdp-home:/home/rdpuser:Z"
+          ],
+          "env": {
+            "TUNNEL_PROVIDERS": "serveo,localhost.run,cloudflare"
+          }
+        }
+      }
+    }
+  },
+  "global": {
+    "default_provider": "docker",
+    "cleanup_on_exit": true,
+    "log_path": "/tmp/rdp-mega/virtual-environments.log"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "version": "9.0.0",
+  "description": "Default values used by auto-config.ps1 / auto-config.sh when one or more config files are missing. These are conservative, safe defaults.",
+  "session": {
+    "default_duration_hours": 6,
+    "max_duration_hours": 24,
+    "default_profile": "productivity",
+    "default_platform": "windows",
+    "default_runner": "windows-latest",
+    "default_username": "runner"
+  },
+  "tunnel": {
+    "default_providers": "serveo,localhost.run,cloudflare",
+    "default_local_port": 3389,
+    "default_transport": "ssh_remote_forward",
+    "ready_wait_seconds": 30,
+    "fallback_after_seconds": 60,
+    "max_retries": 3
+  },
+  "rdp": {
+    "port": 3389,
+    "security_layer": "negotiate",
+    "user_authentication": false,
+    "color_depth": 32,
+    "width": 1920,
+    "height": 1080,
+    "keyboard_hook": 2,
+    "audio_capture": true
+  },
+  "password": {
+    "length": 16,
+    "complexity": "alnum_symbols",
+    "rotate_interval_hours": 6,
+    "history_size": 5
+  },
+  "optimization": {
+    "default_profile": "productivity",
+    "visual_effects": "let_windows_choose",
+    "disable_sleep": true,
+    "high_performance_power": true
+  },
+  "notifications": {
+    "heartbeat_interval_minutes": 15,
+    "on_tunnel_up": true,
+    "on_password_rotated": true,
+    "on_session_end": true
+  },
+  "artifacts": {
+    "credentials_retention_days": 1,
+    "backup_retention_days": 7,
+    "report_retention_days": 7
+  },
+  "paths": {
+    "config_dir": "configs",
+    "core_powershell": "core/powershell",
+    "core_bash": "core/bash",
+    "log_dir": "/tmp/rdp-mega"
+  }
+}

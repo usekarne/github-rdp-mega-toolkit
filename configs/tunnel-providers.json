@@ -1,0 +1,53 @@
+{
+  "version": "9.0.0",
+  "description": "Ordered list of tunnel providers used by setup-tunnel.ps1 / setup-tunnel.sh. NGROK IS INTENTIONALLY EXCLUDED. Order indicates priority: serveo first, localhost.run second, cloudflare fallback.",
+  "priority_order": ["serveo", "localhost.run", "cloudflare"],
+  "default_local_port": 3389,
+  "default_transport": "ssh_remote_forward",
+  "providers": {
+    "serveo": {
+      "transport": "ssh_remote_forward",
+      "binary_url": "https://www.openssh.com/portable.html",
+      "needs_client_bridge": false,
+      "tunnel_command": "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -o ExitOnForwardFailure=yes -R 3389:localhost:3389 -N serveo.net",
+      "url_regex": "https?://[a-z0-9-]+\\.serveo\\.net",
+      "ready_wait_seconds": 30,
+      "fallback_after_seconds": 60,
+      "max_retries": 3,
+      "comment": "Primary SSH reverse-tunnel provider. No client bridge needed."
+    },
+    "localhost.run": {
+      "transport": "ssh_remote_forward",
+      "binary_url": "https://www.openssh.com/portable.html",
+      "needs_client_bridge": false,
+      "tunnel_command": "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -o ExitOnForwardFailure=yes -R 3389:localhost:3389 -N nokey@localhost.run",
+      "url_regex": "https?://[a-z0-9-]+\\.lhr\\.life",
+      "ready_wait_seconds": 30,
+      "fallback_after_seconds": 60,
+      "max_retries": 3,
+      "comment": "Secondary SSH reverse-tunnel provider. Uses nokey@localhost.run."
+    },
+    "cloudflare": {
+      "transport": "quic_http2",
+      "binary_url": "https://github.com/cloudflare/cloudflared/releases/latest",
+      "needs_client_bridge": true,
+      "tunnel_command": "cloudflared tunnel --url tcp://localhost:3389",
+      "url_regex": "https?://[a-z0-9-]+\\.trycloudflare\\.com",
+      "ready_wait_seconds": 45,
+      "fallback_after_seconds": 90,
+      "max_retries": 2,
+      "comment": "Fallback provider. Requires cloudflared binary. Provides trycloudflare quick tunnels."
+    }
+  },
+  "banned_providers": ["ngrok"],
+  "global": {
+    "ssh_options": [
+      "-o StrictHostKeyChecking=no",
+      "-o UserKnownHostsFile=NUL",
+      "-o ExitOnForwardFailure=yes",
+      "-o ServerAliveInterval=30",
+      "-o ServerAliveCountMax=3"
+    ],
+    "log_path": "/tmp/rdp-mega/tunnel.log"
+  }
+}

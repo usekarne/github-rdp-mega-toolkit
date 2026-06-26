@@ -1,0 +1,14 @@
+Package: rdp-toolkit
+Version: 9.0.0
+Section: net
+Priority: optional
+Architecture: all
+Depends: python3, python3-yaml, openssh-client, freerdp2-x11
+Maintainer: usekarne <usekarne@users.noreply.github.com>
+Homepage: https://github.com/usekarne/github-rdp-mega-toolkit
+Description: Cross-platform RDP automation toolkit
+ RDP Mega Toolkit provides automated RDP session management with
+ multi-tunnel failover (serveo, localhost.run, cloudflare, localtunnel),
+ built-in VM orchestration, multi-platform support (Kali/Windows/Android),
+ and YAML-driven configuration. Includes bash completion and a doctor
+ command for environment validation.

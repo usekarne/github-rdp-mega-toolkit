@@ -1,0 +1,79 @@
+{
+  "version": "9.0.0",
+  "description": "Windows features (OptionalFeatures) to enable or disable per optimization profile. Applies on Windows runners via DISM / PowerShell cmdlets.",
+  "profiles": {
+    "productivity": {
+      "enable": [
+        "NetFx3",
+        "NetFx4-AdvSrvs",
+        "Microsoft-Windows-Subsystem-Linux",
+        "VirtualMachinePlatform",
+        "Microsoft-Hyper-V-All",
+        "Printing-Foundation-Features",
+        "Printing-Client",
+        "SearchEngine-Client-Package"
+      ],
+      "disable": [
+        "FaxServicesClientPackage",
+        "WindowsMediaPlayer",
+        "MediaPlayback",
+        "Internet-Explorer-Optional-amd64",
+        "SmbDirect",
+        "WorkFolders-Client"
+      ]
+    },
+    "gaming": {
+      "enable": [
+        "DirectPlay",
+        "NetFx3",
+        "NetFx4-AdvSrvs",
+        "SearchEngine-Client-Package"
+      ],
+      "disable": [
+        "FaxServicesClientPackage",
+        "WindowsMediaPlayer",
+        "MediaPlayback",
+        "Internet-Explorer-Optional-amd64",
+        "SmbDirect",
+        "WorkFolders-Client",
+        "Printing-Foundation-Features",
+        "Printing-Client",
+        "Microsoft-Hyper-V-All",
+        "VirtualMachinePlatform",
+        "Microsoft-Windows-Subsystem-Linux",
+        "InternetPrintClient",
+        "WCF-Services45",
+        "Windows-Defender-Default-Definitions"
+      ]
+    },
+    "minimal": {
+      "enable": [
+        "NetFx3"
+      ],
+      "disable": [
+        "FaxServicesClientPackage",
+        "WindowsMediaPlayer",
+        "MediaPlayback",
+        "Internet-Explorer-Optional-amd64",
+        "SmbDirect",
+        "WorkFolders-Client",
+        "Printing-Foundation-Features",
+        "Printing-Client",
+        "Microsoft-Hyper-V-All",
+        "VirtualMachinePlatform",
+        "Microsoft-Windows-Subsystem-Linux",
+        "InternetPrintClient",
+        "WCF-Services45",
+        "SearchEngine-Client-Package",
+        "Windows-Defender-Default-Definitions",
+        "SMB1Protocol"
+      ]
+    }
+  },
+  "global": {
+    "use_dism": true,
+    "restart_if_required": false,
+    "no_restart_flag": "/NoRestart",
+    "log_path": "C:\\Windows\\Temp\\rdp-mega-features.log"
+  }
+}

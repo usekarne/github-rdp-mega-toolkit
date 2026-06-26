@@ -1,0 +1,59 @@
+name: "Quick Tunnel Test v9.0"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  quick-tunnel:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start a local echo server on 3389
+        shell: bash
+        run: |
+          nohup bash -c 'while true; do echo "RDP-MOCK $(date)" | nc -l -p 3389 -q 1; done' > /tmp/mock-server.log 2>&1 &
+          echo $! > /tmp/mock.pid
+          sleep 1
+          echo "Mock server PID: $(cat /tmp/mock.pid)"
+
+      - name: Quick tunnel-only test (5 minutes, no RDP, no software)
+        shell: bash
+        env:
+          TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+        run: |
+          timeout 300 bash ./core/bash/setup-tunnel.sh --providers "$TUNNEL_PROVIDERS" --local-port 3389 --test-mode || true
+
+      - name: Upload tunnel test artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-tunnel-test-${{ github.run_id }}
+          path: |
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/mock.pid ]; then
+            kill "$(cat /tmp/mock.pid)" 2>/dev/null || true
+          fi
+          sudo bash ./core/bash/cleanup.sh --force || true

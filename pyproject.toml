@@ -1,0 +1,128 @@
+# =============================================================================
+# pyproject.toml — RDP Mega Toolkit v9
+# PEP 517 / PEP 518 build configuration.
+# Build with: python3 -m build
+# Install with: python3 -m pip install .
+# =============================================================================
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# -----------------------------------------------------------------------------
+# Project metadata (PEP 621)
+# -----------------------------------------------------------------------------
+[project]
+name = "rdp-toolkit"
+version = "9.0.0"
+description = "Cross-platform (Kali/Windows/Android) RDP automation toolkit with multi-tunnel failover and Docker VMs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "usekarne", email = "usekarne@users.noreply.github.com" },
+]
+maintainers = [
+    { name = "usekarne", email = "usekarne@users.noreply.github.com" },
+]
+keywords = [
+    "rdp",
+    "freerdp",
+    "xfreerdp",
+    "remote-desktop",
+    "github-actions",
+    "tunnel",
+    "serveo",
+    "cloudflared",
+    "kali",
+    "termux",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Android",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Internet",
+]
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+# -----------------------------------------------------------------------------
+# Optional dependency groups (extras) for dev / docs / specific platforms.
+# -----------------------------------------------------------------------------
+[project.optional-dependencies]
+dev = [
+    "build>=1.0",
+    "twine>=4.0",
+    "pylint>=3.0",
+    "black>=23.0",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+# -----------------------------------------------------------------------------
+# Console-script entry point. Installs the `rdp-toolkit` command on $PATH.
+# -----------------------------------------------------------------------------
+[project.scripts]
+rdp-toolkit = "rdp_toolkit.__main__:main"
+
+# -----------------------------------------------------------------------------
+# URLs (PyPI metadata).
+# -----------------------------------------------------------------------------
+[project.urls]
+Homepage = "https://github.com/usekarne/github-rdp-mega-toolkit"
+Repository = "https://github.com/usekarne/github-rdp-mega-toolkit"
+Documentation = "https://github.com/usekarne/github-rdp-mega-toolkit/tree/main/docs"
+"Bug Tracker" = "https://github.com/usekarne/github-rdp-mega-toolkit/issues"
+Changelog = "https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/CHANGELOG.md"
+
+# -----------------------------------------------------------------------------
+# Setuptools-specific configuration.
+# -----------------------------------------------------------------------------
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["rdp_toolkit*"]
+exclude = ["tests*", "docs*", "docker*", "installers*"]
+
+# Ship the bundled shell + PowerShell scripts and YAML configs alongside the
+# Python package so installers and the platforms layer can find them at
+# runtime via importlib.resources or __file__-relative paths.
+[tool.setuptools.package-data]
+"rdp_toolkit" = [
+    "core_sh/*.sh",
+    "core_ps/*.ps1",
+]
+
+# -----------------------------------------------------------------------------
+# Tooling configuration (not enforced at runtime, but recommended).
+# -----------------------------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
+    "line-too-long",
+]

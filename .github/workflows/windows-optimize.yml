@@ -1,0 +1,56 @@
+name: "Windows Optimize v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Optimization profile (productivity|gaming|minimal)"
+        required: false
+        default: "productivity"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  OPT_PROFILE: ${{ github.event.inputs.profile || 'productivity' }}
+
+jobs:
+  windows-optimize:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply optimization profile only
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\optimize-windows.ps1 -Profile $env:OPT_PROFILE
+
+      - name: Snapshot optimization report
+        shell: pwsh
+        run: |
+          $report = "Optimization applied: $env:OPT_PROFILE`r`n"
+          $report += "Timestamp: $(Get-Date -Format o)`r`n"
+          $report += "Profile details from configs/optimization-profiles.json`r`n"
+          $report | Out-File -Encoding ASCII -FilePath optimization-report.txt
+          Get-Content optimization-report.txt
+
+      - name: Upload optimization report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-optimize-${{ github.run_id }}
+          path: |
+            optimization-report.txt
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          Remove-Item -Force optimization-report.txt -ErrorAction SilentlyContinue
+          Write-Host "Optimize workflow finished."

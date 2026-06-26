@@ -1,0 +1,131 @@
+# =============================================================================
+# docker-compose.yml — rdp-mega-toolkit v9
+# Three RDP-capable containers on a shared bridge network:
+#   - kali-rdp     : 13389  (Kali Rolling + XFCE)
+#   - ubuntu-rdp   : 23389  (Ubuntu 22.04 + XFCE4)
+#   - windows-rdp  : 33389  (Ubuntu 22.04 + Wine + Fluxbox, "Windows-compat")
+#
+# Usage:
+#   docker compose build
+#   docker compose up -d kali-rdp
+#   docker compose logs -f kali-rdp
+#   docker compose down
+# =============================================================================
+version: "3.9"
+
+networks:
+  rdp-net:
+    driver: bridge
+    name: rdp-net
+
+volumes:
+  kali-home:
+    name: rdp-toolkit-kali-home
+  ubuntu-home:
+    name: rdp-toolkit-ubuntu-home
+  windows-home:
+    name: rdp-toolkit-windows-home
+
+x-rdp-common: &rdp-common
+  restart: unless-stopped
+  networks:
+    - rdp-net
+  init: true
+
+services:
+
+  # --------------------------------------------------------------------------
+  # Kali Rolling + XFCE + xRDP
+  # --------------------------------------------------------------------------
+  kali-rdp:
+    <<: *rdp-common
+    build:
+      context: ./kali-rdp
+      dockerfile: Dockerfile
+    image: rdp-toolkit-kali:9.0
+    container_name: rdp-toolkit-kali
+    hostname: kali-rdp
+    environment:
+      RDP_USER: "${KALI_RDP_USER:-kali}"
+      RDP_PASS: "${KALI_RDP_PASS:-kali}"
+      RDP_UID: "${RDP_UID:-1000}"
+      RDP_GID: "${RDP_GID:-1000}"
+      ENABLE_SSH: "true"
+      ENABLE_XRDP: "true"
+      TZ: "${TZ:-UTC}"
+    ports:
+      - "13389:3389"
+      - "10022:22"
+    volumes:
+      - kali-home:/home/kali
+    healthcheck:
+      test: ["CMD-SHELL", "ss -ltn | grep -q ':3389' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # --------------------------------------------------------------------------
+  # Ubuntu 22.04 + XFCE4 + xRDP
+  # --------------------------------------------------------------------------
+  ubuntu-rdp:
+    <<: *rdp-common
+    build:
+      context: ./ubuntu-rdp
+      dockerfile: Dockerfile
+    image: rdp-toolkit-ubuntu:9.0
+    container_name: rdp-toolkit-ubuntu
+    hostname: ubuntu-rdp
+    environment:
+      RDP_USER: "${UBUNTU_RDP_USER:-ubuntu}"
+      RDP_PASS: "${UBUNTU_RDP_PASS:-ubuntu}"
+      RDP_UID: "${RDP_UID:-1000}"
+      RDP_GID: "${RDP_GID:-1000}"
+      ENABLE_SSH: "true"
+      ENABLE_XRDP: "true"
+      TZ: "${TZ:-UTC}"
+    ports:
+      - "23389:3389"
+      - "20022:22"
+    volumes:
+      - ubuntu-home:/home/ubuntu
+    healthcheck:
+      test: ["CMD-SHELL", "ss -ltn | grep -q ':3389' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # --------------------------------------------------------------------------
+  # "Windows" (Wine + Fluxbox + xRDP) — see windows-rdp/Dockerfile for the
+  # licensing note on why we don't ship a real Windows image.
+  # --------------------------------------------------------------------------
+  windows-rdp:
+    <<: *rdp-common
+    build:
+      context: ./windows-rdp
+      dockerfile: Dockerfile
+    image: rdp-toolkit-windows:9.0
+    container_name: rdp-toolkit-windows
+    hostname: windows-rdp
+    environment:
+      RDP_USER: "${WINDOWS_RDP_USER:-win}"
+      RDP_PASS: "${WINDOWS_RDP_PASS:-win}"
+      RDP_UID: "${RDP_UID:-1000}"
+      RDP_GID: "${RDP_GID:-1000}"
+      ENABLE_SSH: "true"
+      ENABLE_XRDP: "true"
+      ENABLE_WINE: "true"
+      WINETRICKS_APPS: "${WINETRICKS_APPS:-notepad}"
+      TZ: "${TZ:-UTC}"
+    ports:
+      - "33389:3389"
+      - "30022:22"
+    volumes:
+      - windows-home:/home/win
+    healthcheck:
+      test: ["CMD-SHELL", "ss -ltn | grep -q ':3389' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3

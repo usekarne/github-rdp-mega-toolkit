@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# postrm — rdp-toolkit Debian post-removal script
+set -euo pipefail
+
+PKG_NAME="rdp-toolkit"
+BIN_SYMLINK="/usr/bin/rdp-toolkit"
+COMP_FILE="/etc/bash_completion.d/rdp-toolkit"
+CONFIG_DIR="${HOME:-/root}/.config/rdp-toolkit"
+INSTALL_DIR="/opt/rdp-toolkit"
+
+# Remove launcher symlink (idempotent)
+if [ -L "${BIN_SYMLINK}" ] || [ -e "${BIN_SYMLINK}" ]; then
+    rm -f "${BIN_SYMLINK}"
+fi
+
+# Remove bash completion
+if [ -f "${COMP_FILE}" ]; then
+    rm -f "${COMP_FILE}"
+fi
+
+# Refresh shell completion system if available
+which activate-bash-completion >/dev/null 2>&1 && activate-bash-completion || true
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        # On plain remove / upgrade, keep config dir
+        echo "[postrm] ${PKG_NAME} removed. Config preserved at ${CONFIG_DIR}"
+        ;;
+    purge)
+        # On purge, offer to remove config dir
+        echo "[postrm] Purging ${PKG_NAME}..."
+        if [ -d "${CONFIG_DIR}" ]; then
+            if [ -t 0 ] && [ -t 1 ]; then
+                read -r -p "Remove config directory ${CONFIG_DIR}? [y/N] " answer < /dev/tty
+                case "${answer}" in
+                    y|Y|yes|YES)
+                        rm -rf "${CONFIG_DIR}"
+                        echo "[postrm] Config directory removed."
+                        ;;
+                    *)
+                        echo "[postrm] Config directory kept at ${CONFIG_DIR}"
+                        ;;
+                esac
+            else
+                # Non-interactive: assume yes on purge
+                rm -rf "${CONFIG_DIR}"
+                echo "[postrm] Config directory removed (non-interactive purge)."
+            fi
+        fi
+        # Also remove the install dir if it survived
+        if [ -d "${INSTALL_DIR}" ]; then
+            rm -rf "${INSTALL_DIR}"
+        fi
+        ;;
+esac
+
+echo
+echo "=================================================="
+echo " ${PKG_NAME} has been removed."
+echo "=================================================="
+echo " Thank you for using RDP Mega Toolkit."
+echo " Reinstall anytime: apt install ./rdp-toolkit_9.0.0_all.deb"
+echo
+
+exit 0

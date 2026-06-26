@@ -1,0 +1,61 @@
+{
+  "version": "9.0.0",
+  "description": "Notification channels and event subscriptions for RDP Mega Toolkit v9.0. Supports Discord, Telegram, and Slack with per-event enable/disable.",
+  "channels": {
+    "discord": {
+      "enabled": false,
+      "webhook_secret_name": "DISCORD_WEBHOOK_URL",
+      "username": "RDP Mega Toolkit",
+      "avatar_url": "",
+      "color_success": 3066993,
+      "color_warning": 15105570,
+      "color_error": 15158332
+    },
+    "telegram": {
+      "enabled": false,
+      "bot_token_secret_name": "TELEGRAM_BOT_TOKEN",
+      "chat_id_secret_name": "TELEGRAM_CHAT_ID",
+      "parse_mode": "Markdown"
+    },
+    "slack": {
+      "enabled": false,
+      "webhook_secret_name": "SLACK_WEBHOOK_URL",
+      "channel": "#rdp-mega",
+      "icon_emoji": ":desktop_computer:"
+    }
+  },
+  "events": {
+    "on_tunnel_up": {
+      "enabled": true,
+      "channels": ["discord", "telegram", "slack"],
+      "message_template": "Tunnel UP — provider={provider} url={url} session={session_id}"
+    },
+    "on_password_rotated": {
+      "enabled": true,
+      "channels": ["discord", "telegram"],
+      "message_template": "Password rotated — session={session_id} timestamp={timestamp}"
+    },
+    "on_session_end": {
+      "enabled": true,
+      "channels": ["discord", "telegram", "slack"],
+      "message_template": "Session ended — session={session_id} duration={duration_hours}h"
+    },
+    "on_health_check_failed": {
+      "enabled": true,
+      "channels": ["discord", "slack"],
+      "message_template": "Health check FAILED — session={session_id} reason={reason}"
+    },
+    "on_tunnel_failover": {
+      "enabled": true,
+      "channels": ["discord", "telegram"],
+      "message_template": "Tunnel failover — from={from_provider} to={to_provider} session={session_id}"
+    }
+  },
+  "on_heartbeat_interval_minutes": 15,
+  "global": {
+    "rate_limit_per_minute": 10,
+    "retry_attempts": 3,
+    "retry_backoff_seconds": 5,
+    "log_path": "/tmp/rdp-mega/notifications.log"
+  }
+}

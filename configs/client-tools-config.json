@@ -1,0 +1,70 @@
+{
+  "version": "9.0.0",
+  "description": "Configuration for the RDP Mega Toolkit client CLIs (Python, Bash, PowerShell). Controls polling, cache, default repo, and visual theme.",
+  "client": {
+    "default_repo": "usekarne/github-rdp-mega-toolkit",
+    "default_branch": "main",
+    "default_workflow": "lite-rdp.yml",
+    "polling_interval_seconds": 30,
+    "polling_max_attempts": 60,
+    "cache_dir": "~/.cache/rdp-mega",
+    "cache_ttl_seconds": 3600,
+    "credentials_dir": "~/.config/rdp-mega/credentials",
+    "color_theme": "dark",
+    "progress_bar": true,
+    "auto_open_rdp_file": true,
+    "log_level": "info",
+    "log_file": "~/.cache/rdp-mega/client.log"
+  },
+  "themes": {
+    "dark": {
+      "background": "#1e1e1e",
+      "foreground": "#d4d4d4",
+      "accent": "#569cd6",
+      "success": "#4af626",
+      "warning": "#f1c40f",
+      "error": "#f44747"
+    },
+    "light": {
+      "background": "#ffffff",
+      "foreground": "#1e1e1e",
+      "accent": "#0066cc",
+      "success": "#107c10",
+      "warning": "#c19c00",
+      "error": "#c50f1f"
+    },
+    "high_contrast": {
+      "background": "#000000",
+      "foreground": "#ffffff",
+      "accent": "#ffff00",
+      "success": "#00ff00",
+      "warning": "#ff8800",
+      "error": "#ff0000"
+    }
+  },
+  "commands": {
+    "start_session": {
+      "aliases": ["start", "up", "launch"],
+      "default_args": {
+        "duration_hours": 6,
+        "profile": "productivity"
+      }
+    },
+    "kill_session": {
+      "aliases": ["kill", "stop", "down"],
+      "confirm": true
+    },
+    "status": {
+      "aliases": ["st", "info"],
+      "watch": false
+    },
+    "rotate_password": {
+      "aliases": ["rotate", "passwd"],
+      "confirm": true
+    }
+  },
+  "notifications": {
+    "desktop": true,
+    "terminal_bell": false
+  }
+}

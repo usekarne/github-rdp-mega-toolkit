@@ -1,0 +1,81 @@
+name: "Test Suite v9.0"
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml jsonschema
+          # Install test requirements if present
+          if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+
+      - name: Run all tests in tests/ directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d tests ] && [ -n "$(ls tests/*.py tests/test_*.py 2>/dev/null)" ]; then
+            pytest tests/ -v --junitxml=test-results.xml
+          else
+            echo "No Python tests found — running smoke validation."
+            # Smoke test: validate all JSON and YAML configs
+            python3 - << 'PY'
+            import os, json, yaml, sys
+            errors = []
+            for root, _, files in os.walk("configs"):
+                for f in files:
+                    p = os.path.join(root, f)
+                    try:
+                        if f.endswith(".json"):
+                            json.load(open(p))
+                        elif f.endswith((".yml", ".yaml")):
+                            yaml.safe_load(open(p))
+                    except Exception as e:
+                        errors.append(f"{p}: {e}")
+            if errors:
+                print("\n".join(errors))
+                sys.exit(1)
+            print("All configs valid.")
+            PY
+          fi
+
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_id }}
+          path: |
+            test-results.xml
+            tests/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -f test-results.xml
+          echo "Test suite workflow complete."

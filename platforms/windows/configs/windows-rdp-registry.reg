@@ -1,0 +1,92 @@
+Windows Registry Editor Version 5.00
+
+; =====================================================================
+; GitHub RDP Mega Toolkit v9.0.0
+; Windows RDP enablement registry file
+; =====================================================================
+; Purpose:
+;   * Enables incoming RDP connections on the host
+;   * Disables Network Level Authentication (NLA) requirement so that
+;     automated RDP connections from mstsc.exe / xfreerdp succeed without
+;     a domain-joined client. Set UserAuthentication=1 to require NLA.
+;
+; Apply:
+;   1. Double-click this file in Explorer, OR
+;   2. reg import windows-rdp-registry.reg   (from elevated cmd)
+;   3. powershell -Command "reg import windows-rdp-registry.reg"
+;
+; Reverse (re-disable RDP):
+;   Set fDenyTSConnections=1 via:
+;     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 1 /f
+;
+; After applying, restart the TermService service or reboot the host.
+; =====================================================================
+
+; ----------------------------------------------------------------------
+; Enable incoming RDP (0 = enabled, 1 = disabled)
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server]
+"fDenyTSConnections"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Disable NLA requirement (0 = off, allows non-domain clients)
+; Set to 1 to require NLA (more secure but blocks unjoined clients).
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp]
+"UserAuthentication"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Allow RDP through the Windows Firewall (Domain profile)
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules]
+"RDP-In-TCP-3389"="v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=3389|App=System|Name=@FirewallAPI.dll,-28752|Desc=@FirewallAPI.dll,-28753|EmbedCtxt=@FirewallAPI.dll,-28752|"
+
+; ----------------------------------------------------------------------
+; Allow RDP through the Windows Firewall (Private profile, UDP 3389)
+; ----------------------------------------------------------------------
+"RDP-In-UDP-3389"="v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|LPort=3389|App=System|Name=@FirewallAPI.dll,-28754|Desc=@FirewallAPI.dll,-28755|EmbedCtxt=@FirewallAPI.dll,-28752|"
+
+; ----------------------------------------------------------------------
+; Set RDP-Tcp security layer:
+;   0 = RDP Security Layer (compat with older clients)
+;   1 = Negotiate (default — best for mixed clients)
+;   2 = SSL/TLS (most secure; requires certificate)
+; We default to 1 (Negotiate) for cross-client compatibility.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp]
+"SecurityLayer"=dword:00000001
+
+; ----------------------------------------------------------------------
+; Set RDP-Tcp encryption level:
+;   1 = Low  (client-to-server only)
+;   2 = Client Compatible (default)
+;   3 = High (full encryption both directions)
+; We default to 2 (Client Compatible).
+; ----------------------------------------------------------------------
+"MinEncryptionLevel"=dword:00000002
+
+; ----------------------------------------------------------------------
+; Allow multiple RDP sessions (1 = allow multiple, 0 = single session)
+; ----------------------------------------------------------------------
+"MaxInstanceCount"=dword:FFFFFFFF
+"MaxMonitors"=dword:00000002
+
+; ----------------------------------------------------------------------
+; Auto-reconnect: enable (1) to let clients reconnect after a drop.
+; ----------------------------------------------------------------------
+"MaxDisconnectionTime"=dword:00000000
+"MaxConnectionTime"=dword:00000000
+"MaxIdleTime"=dword:00000000
+"KeepAliveTimeout"=dword:00000001
+"KeepAliveInterval"=dword:00000001
+
+; ----------------------------------------------------------------------
+; Disable RDP printer redirection (reduces attack surface; uncomment
+; to disable). Default is enabled (0).
+; ----------------------------------------------------------------------
+; "fDisableCpm"=dword:00000001
+
+; ----------------------------------------------------------------------
+; Disable clipboard redirection (more secure; uncomment to disable).
+; ----------------------------------------------------------------------
+; "fDisableClip"=dword:00000001

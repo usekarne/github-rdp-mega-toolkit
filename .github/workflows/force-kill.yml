@@ -1,0 +1,71 @@
+name: "Force Kill All v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_filter:
+        description: "Filter by workflow name (empty = all)"
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry run (list only, do not cancel)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  force-kill:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: "Cancel all in-progress / queued / waiting runs (skip self)"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          WORKFLOW_FILTER: ${{ inputs.workflow_filter }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SELF_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -e
+          echo "Force kill started at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Self run_id: ${SELF_RUN_ID} (will be skipped)"
+          echo "Workflow filter: '${WORKFLOW_FILTER}'"
+          echo "Dry run: ${DRY_RUN}"
+          for STATUS in in_progress queued waiting; do
+            echo "--- status=${STATUS} ---"
+            curl -s -H "Authorization: bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/actions/runs?status=${STATUS}&per_page=100" \
+              | python3 -c "
+          import json, sys, os
+          data = json.load(sys.stdin)
+          wf_filter = os.environ.get('WORKFLOW_FILTER', '').strip().lower()
+          self_id = os.environ.get('SELF_RUN_ID', '')
+          for r in data.get('workflow_runs', []):
+              rid = str(r['id'])
+              if rid == self_id:
+                  continue
+              wname = r.get('name', '')
+              if wf_filter and wf_filter not in wname.lower():
+                  continue
+              print(f'{rid}|{wname}')
+          " | while IFS='|' read -r RID WNAME; do
+                [ -z "$RID" ] && continue
+                if [ "$DRY_RUN" = "true" ]; then
+                  echo "[DRY-RUN] would cancel $RID ($WNAME)"
+                else
+                  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+                    -H "Authorization: bearer $GH_TOKEN" \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/$REPO/actions/runs/$RID/cancel" || true)
+                  echo "cancel $RID ($WNAME) -> HTTP $HTTP_CODE"
+                fi
+                sleep 0.2
+              done
+          done
+          echo "Force kill complete (self run_id ${SELF_RUN_ID} preserved)"

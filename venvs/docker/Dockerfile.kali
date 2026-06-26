@@ -1,0 +1,43 @@
+FROM kalilinux/kali-rolling:latest
+
+LABEL maintainer="usekarne <usekarne@users.noreply.github.com>"
+LABEL version="9.0.0"
+LABEL description="GitHub RDP Mega Toolkit v9.0 - Kali Linux Docker image"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV RDP_USER=runner
+ENV SESSION_HOURS=6
+
+# Install xrdp + XFCE + essential tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xrdp \
+    xfce4 \
+    xfce4-goodies \
+    dbus-x11 \
+    curl \
+    wget \
+    openssh-client \
+    python3 \
+    freerdp2-x11 \
+    nmap \
+    wireshark \
+    sqlmap \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy toolkit
+COPY . /opt/github-rdp-toolkit/
+RUN chmod +x /opt/github-rdp-toolkit/core/bash/*.sh \
+    && chmod +x /opt/github-rdp-toolkit/tools/bash/*.sh \
+    && chmod +x /opt/github-rdp-toolkit/tools/python/*.py \
+    && ln -sf /opt/github-rdp-toolkit/tools/bash/rdp-cli.sh /usr/local/bin/rdp-toolkit
+
+# Configure xrdp
+RUN sed -i 's/^port=.*/port=3389/' /etc/xrdp/xrdp.ini \
+    && systemctl enable xrdp 2>/dev/null || true
+
+EXPOSE 3389
+
+WORKDIR /opt/github-rdp-toolkit
+
+CMD ["/opt/github-rdp-toolkit/venvs/docker/entrypoint.sh"]

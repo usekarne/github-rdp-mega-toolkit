@@ -1,0 +1,107 @@
+Windows Registry Editor Version 5.00
+
+; =====================================================================
+; GitHub RDP Mega Toolkit v9.0.0
+; Windows Services Configuration Registry
+; =====================================================================
+; Purpose:
+;   Configure Windows services that affect RDP session stability and
+;   performance. All changes are reversible — re-apply the default
+;   service startup types (Manual/Automatic) by reverting the values.
+;
+; Service startup types:
+;   0 = Boot       (driver loaded by boot loader)
+;   1 = System     (loaded by IoInitSystem)
+;   2 = Automatic  (loaded by Service Control Manager at startup)
+;   3 = Manual     (loaded on demand)
+;   4 = Disabled
+;
+; Apply:
+;   reg import windows-services-registry.reg
+; Reverse:
+;   Use the reversal values noted per key.
+; =====================================================================
+
+; ----------------------------------------------------------------------
+; TermService (Remote Desktop Services) — Automatic (delayed start)
+; Default: Manual. We set to Automatic (delayed, 2) for headless runners.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService]
+"Start"=dword:00000002
+"DelayedAutostart"=dword:00000001
+"FailureActions"=hex:80,00,00,00,00,00,00,00,00,00,00,00,03,00,00,00,14,00,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00,00,00,00,00
+
+; ----------------------------------------------------------------------
+; UmRdpService (Remote Desktop Services UserMode Port Redirector) — Automatic
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\UmRdpService]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; SessionEnv (Remote Desktop Configuration) — Automatic
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SessionEnv]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; TermService listener: ensure RDP-Tcp is bound
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters]
+"ServiceDll"=hex(2):25,00,53,00,79,00,73,00,74,00,65,00,6d,00,52,00,6f,00,6f,00,74,00,25,00,5c,00,53,00,79,00,73,00,74,00,65,00,6d,00,33,00,32,00,5c,00,74,00,65,00,72,00,6d,00,73,00,72,00,76,00,2e,00,64,00,6c,00,6c,00,00,00
+
+; ----------------------------------------------------------------------
+; WinRM (Windows Remote Management) — Automatic (for remote PowerShell)
+; Default: Manual. Useful for client-side remote management.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinRM]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; BFE (Base Filtering Engine) + Mpssvc (Windows Firewall) — Automatic
+; Critical for inbound RDP firewall rules to work.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BFE]
+"Start"=dword:00000002
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MpsSvc]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; Netman (Network Connections) + Dhcp — Automatic
+; Ensures the host always has a network connection at boot.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netman]
+"Start"=dword:00000002
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Dhcp]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; LanmanServer (Server service, SMB) — Automatic
+; Required for some RDP printer/drive redirection.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer]
+"Start"=dword:00000002
+
+; ----------------------------------------------------------------------
+; Time broker / W32Time — Automatic (keep clock in sync for Kerberos/SSL)
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time]
+"Start"=dword:00000003
+
+; ----------------------------------------------------------------------
+; Disable Windows Update auto-restart while RDP session is active.
+; Set Windows Update to "Download only" (4 = Disabled, 2 = Notify,
+; 3 = Auto download + notify install, 4 = auto download + schedule install).
+; We set to 3 to prevent forced reboot mid-session.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
+"NoAutoRebootWithLoggedOnUsers"=dword:00000001
+"AUOptions"=dword:00000003
+
+; ----------------------------------------------------------------------
+; Disable Fast Startup (hiberboot) — it conflicts with RDP reconnection
+; after a restart because Fast Startup doesn't fully shut down services.
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SessionManager\Power]
+"HiberbootEnabled"=dword:00000000

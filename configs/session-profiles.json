@@ -1,0 +1,113 @@
+{
+  "version": "9.0.0",
+  "description": "Preset session profiles that bundle an optimization profile, software set, duration, and tunnel defaults. Each profile can be referenced by name from workflows.",
+  "profiles": {
+    "lite": {
+      "description": "6-hour Windows RDP with productivity profile.",
+      "platform": "windows",
+      "duration_hours": 6,
+      "optimization_profile": "productivity",
+      "install_software": true,
+      "software_categories": ["browsers", "editors", "utilities"],
+      "rotate_password": false,
+      "health_check_interval_minutes": 60
+    },
+    "pro": {
+      "description": "12-hour Windows RDP with optional 4-hourly password rotation.",
+      "platform": "windows",
+      "duration_hours": 12,
+      "optimization_profile": "productivity",
+      "install_software": true,
+      "software_categories": ["browsers", "editors", "dev_runtimes", "utilities"],
+      "rotate_password": true,
+      "rotate_interval_hours": 4,
+      "health_check_interval_minutes": 60
+    },
+    "ultimate": {
+      "description": "24-hour Windows RDP with 30-min health checks and 6-hourly password rotation.",
+      "platform": "windows",
+      "duration_hours": 24,
+      "optimization_profile": "productivity",
+      "install_software": true,
+      "software_categories": ["browsers", "editors", "dev_runtimes", "cloud_clis", "devops", "utilities"],
+      "rotate_password": true,
+      "rotate_interval_hours": 6,
+      "health_check_interval_minutes": 30
+    },
+    "kali": {
+      "description": "6-hour Kali Linux RDP (Ubuntu 22.04 runner) with XFCE + xrdp + Kali tools.",
+      "platform": "linux",
+      "distribution": "kali",
+      "duration_hours": 6,
+      "optimization_profile": "minimal",
+      "install_software": true,
+      "software_categories": ["security_tools"],
+      "rotate_password": false,
+      "health_check_interval_minutes": 60
+    },
+    "ubuntu": {
+      "description": "6-hour Ubuntu 22.04 RDP with XFCE + xrdp.",
+      "platform": "linux",
+      "distribution": "ubuntu",
+      "duration_hours": 6,
+      "optimization_profile": "minimal",
+      "install_software": false,
+      "software_categories": [],
+      "rotate_password": false,
+      "health_check_interval_minutes": 60
+    },
+    "gaming_quick": {
+      "description": "6-hour Windows RDP optimized for gaming. No software install. RFX graphics hint.",
+      "platform": "windows",
+      "duration_hours": 6,
+      "optimization_profile": "gaming",
+      "install_software": false,
+      "software_categories": [],
+      "rotate_password": false,
+      "health_check_interval_minutes": 30,
+      "gfx_mode": "RFX"
+    },
+    "dev_setup": {
+      "description": "8-hour Windows RDP with full dev toolchain (VSCode, Git, Python, Node, Docker).",
+      "platform": "windows",
+      "duration_hours": 8,
+      "optimization_profile": "productivity",
+      "install_software": true,
+      "software_categories": ["editors", "dev_runtimes", "cloud_clis", "devops"],
+      "rotate_password": false,
+      "health_check_interval_minutes": 60
+    },
+    "minimal_ram": {
+      "description": "6-hour Windows RDP with minimal profile (max free RAM).",
+      "platform": "windows",
+      "duration_hours": 6,
+      "optimization_profile": "minimal",
+      "install_software": false,
+      "software_categories": [],
+      "rotate_password": false,
+      "health_check_interval_minutes": 60
+    },
+    "security_audit": {
+      "description": "Kali Linux session for security auditing with the full Kali tools set.",
+      "platform": "linux",
+      "distribution": "kali",
+      "duration_hours": 6,
+      "optimization_profile": "minimal",
+      "install_software": true,
+      "software_categories": ["security_tools"],
+      "rotate_password": true,
+      "rotate_interval_hours": 4,
+      "health_check_interval_minutes": 30
+    },
+    "rendering": {
+      "description": "6-hour Windows RDP for media rendering (Blender, OBS).",
+      "platform": "windows",
+      "duration_hours": 6,
+      "optimization_profile": "gaming",
+      "install_software": true,
+      "software_categories": ["media", "utilities"],
+      "rotate_password": false,
+      "health_check_interval_minutes": 30
+    }
+  }
+}

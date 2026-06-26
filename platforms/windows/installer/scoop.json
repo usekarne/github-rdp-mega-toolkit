@@ -1,0 +1,71 @@
+{
+    "version": "9.0.0",
+    "description": "Cross-platform RDP automation toolkit for GitHub Actions runners (Windows client installer). Tunnels: Serveo (primary), localhost.run (secondary), Cloudflare (fallback). NO ngrok.",
+    "homepage": "https://github.com/usekarne/github-rdp-mega-toolkit",
+    "license": "MIT",
+    "notes": [
+        "After install, open a NEW terminal then run 'rdp-toolkit doctor' to verify the environment.",
+        "To use Cloudflare fallback, install cloudflared.exe separately (scoop install cloudflared) or pass -InstallCloudflared to the bundled install.ps1."
+    ],
+    "url": "https://github.com/usekarne/github-rdp-mega-toolkit/releases/download/v9.0.0/github-rdp-mega-toolkit-9.0.0-windows.zip",
+    "hash": "",
+    "extract_dir": "github-rdp-mega-toolkit-9.0.0",
+    "pre_install": [
+        "Write-Host '[scoop] Pre-installing: GitHub RDP Mega Toolkit v9.0.0' -ForegroundColor Cyan"
+    ],
+    "installer": {
+        "script": [
+            "$toolsDir = $dir",
+            "$installPs1 = Join-Path $toolsDir 'platforms\\windows\\installer\\install.ps1'",
+            "if (Test-Path $installPs1) {",
+            "    Write-Host '[scoop] Running bundled install.ps1 ...' -ForegroundColor Cyan",
+            "    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installPs1 -InstallDir $toolsDir -NoShortcuts -NoPath -Force",
+            "} else {",
+            "    Write-Warning 'install.ps1 not found in package; using scoop dir as install dir.'",
+            "}"
+        ]
+    },
+    "uninstaller": {
+        "script": [
+            "$uninstallPs1 = Join-Path $dir 'platforms\\windows\\installer\\uninstall.ps1'",
+            "if (Test-Path $uninstallPs1) {",
+            "    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $uninstallPs1 -InstallDir $dir",
+            "}"
+        ]
+    },
+    "post_install": [
+        "Write-Host '[scoop] Post-install: registering shim rdp-toolkit' -ForegroundColor Cyan",
+        "$cliWrapper = Join-Path $dir 'bin\\rdp-toolkit.cmd'",
+        "if (Test-Path $cliWrapper) {",
+        "    # Scoop auto-creates shims for *.exe and *.cmd in $dir\\bin if scoop shim is configured.",
+        "}"
+    ],
+    "bin": [
+        "bin\\rdp-toolkit.cmd",
+        "platforms\\windows\\scripts\\connect-mstsc.ps1",
+        "platforms\\windows\\scripts\\connect-xfreerdp.ps1",
+        "platforms\\windows\\scripts\\tunnel-bridge-windows.ps1",
+        "platforms\\windows\\scripts\\fetch-creds-windows.ps1"
+    ],
+    "shortcuts": [
+        [
+            "powershell.exe",
+            "GitHub RDP Toolkit Console",
+            "-NoExit -Command \"& { Set-Location '$dir'; Write-Host 'GitHub RDP Mega Toolkit — ready.' }\"",
+            "Open a toolkit console."
+        ]
+    ],
+    "checkver": {
+        "url": "https://api.github.com/repos/usekarne/github-rdp-mega-toolkit/releases/latest",
+        "jsonpath": "$.tag_name",
+        "regex": "v([\\d.]+)"
+    },
+    "autoupdate": {
+        "url": "https://github.com/usekarne/github-rdp-mega-toolkit/releases/download/v$version/github-rdp-mega-toolkit-$version-windows.zip",
+        "extract_dir": "github-rdp-mega-toolkit-$version"
+    },
+    "persist": [
+        "configs\\user-overrides.yaml",
+        "credentials"
+    ]
+}

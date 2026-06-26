@@ -1,0 +1,201 @@
+# =============================================================================
+# .gitignore — GitHub RDP Mega Toolkit v9
+# Covers: Python, OS (Linux/macOS/Windows/Android), IDE, build artifacts,
+# and credential-bearing files.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Python — bytecode, caches, build dirs
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Test / coverage / type-checking artifacts
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# -----------------------------------------------------------------------------
+# OS-generated files
+# -----------------------------------------------------------------------------
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Android / Termux
+*.apk
+*.aab
+*.dex
+*.class
+local.properties
+
+# -----------------------------------------------------------------------------
+# IDE / editor files
+# -----------------------------------------------------------------------------
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-v][a-z]
+[._]s[a-v][a-z]
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# -----------------------------------------------------------------------------
+# Build artifacts specific to this project
+# -----------------------------------------------------------------------------
+# Debian .deb build staging
+installers/debian/build-stamp
+installers/debian/*.deb.log
+installers/debian/rdp-toolkit/
+installers/debian/rdp-toolkit_*.build
+installers/debian/rdp-toolkit_*.changes
+
+# NSIS build artifacts
+installers/windows/*.exe
+!installers/windows/rdp-toolkit-setup.exe
+installers/windows/build-stamp
+
+# Docker image exports
+docker/*.tar
+docker/*.tar.gz
+
+# -----------------------------------------------------------------------------
+# Credentials & secrets — NEVER commit these.
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*github_token*
+*gh_pat*
+*.token
+secrets.yaml
+secrets.json
+config.local.yaml
+*.local.yaml
+
+# Auto-generated configs in the user's home are out of scope, but if a
+# developer ever drops one into the repo by accident, ignore it.
+config.yaml
+
+# -----------------------------------------------------------------------------
+# Logs & transient runtime state
+# -----------------------------------------------------------------------------
+*.log
+logs/
+pids/
+*.pid
+*.seed
+*.pid.lock
+.rdptk/
+.rdp-toolkit/

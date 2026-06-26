@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# prerm — rdp-toolkit Debian pre-removal script
+set -euo pipefail
+
+PKG_NAME="rdp-toolkit"
+INSTALL_DIR="/opt/rdp-toolkit"
+
+# Stop any running rdp-toolkit processes (tunnels, sessions, etc.)
+echo "[prerm] Stopping any running ${PKG_NAME} processes..."
+
+# Kill processes matching our package name or main module
+pkill -f "rdp_toolkit" 2>/dev/null || true
+pkill -f "rdp-toolkit" 2>/dev/null || true
+
+# If a managed PID file exists, stop cleanly via the toolkit itself
+if command -v rdp-toolkit >/dev/null 2>&1; then
+    rdp-toolkit tunnel stop-all >/dev/null 2>&1 || true
+    rdp-toolkit session stop-all >/dev/null 2>&1 || true
+fi
+
+# Give processes a moment to exit gracefully
+sleep 1
+
+# Force kill any stubborn leftovers (only if they still exist)
+pkill -9 -f "rdp_toolkit" 2>/dev/null || true
+
+# Stop background VMs that we may have launched
+if [ -d "${INSTALL_DIR}" ]; then
+    # Best-effort: do not fail removal if VMs cannot be stopped
+    find "${INSTALL_DIR}" -name '*.pid' -print 2>/dev/null | while read -r pidfile; do
+        if [ -r "${pidfile}" ]; then
+            pid="$(cat "${pidfile}" 2>/dev/null || true)"
+            if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+                kill "${pid}" 2>/dev/null || true
+            fi
+            rm -f "${pidfile}"
+        fi
+    done
+fi
+
+echo "[prerm] All ${PKG_NAME} processes stopped."
+
+exit 0

@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+ln -sf /opt/github-rdp-toolkit/tools/bash/rdp-cli.sh /usr/local/bin/rdp-toolkit
+ln -sf /opt/github-rdp-toolkit/tools/python/fetch-creds.py /usr/local/bin/rdp-fetch-creds
+ln -sf /opt/github-rdp-toolkit/tools/bash/tunnel-bridge.sh /usr/local/bin/rdp-bridge
+chmod +x /opt/github-rdp-toolkit/core/bash/*.sh 2>/dev/null || true
+chmod +x /opt/github-rdp-toolkit/tools/bash/*.sh 2>/dev/null || true
+chmod +x /opt/github-rdp-toolkit/tools/python/*.py 2>/dev/null || true
+echo "github-rdp-toolkit v9.0.0 installed."
+echo "Run 'rdp-toolkit help' to get started."
+echo ""
+echo "Quick start:"
+echo "  export GH_PAT=ghp_your_token"
+echo "  rdp-toolkit trigger lite-rdp.yml"
+echo "  rdp-toolkit watch"

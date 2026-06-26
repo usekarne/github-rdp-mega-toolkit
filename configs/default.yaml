@@ -1,0 +1,134 @@
+# =============================================================================
+# default.yaml — Canonical default config for the RDP Mega Toolkit v9.
+#
+# This file is the cross-platform baseline. Per-platform files (kali.yaml,
+# windows.yaml, android.yaml) override selected keys on top of this. The
+# user's ~/.config/rdp-toolkit/config.yaml overrides on top of all of them.
+#
+# Merge semantics: deep-merge (dicts merge recursively, lists are replaced
+# wholesale). See rdp_toolkit.config.merge_defaults for details.
+# =============================================================================
+
+version: "9.0.0"
+
+# Detected at install time — `rdp-toolkit config` overrides this.
+# Valid values: kali | ubuntu | windows | android
+platform: kali
+
+# Optimization profile — selects a bundle of xfreerdp flags + resolution.
+# Valid values: productivity | gaming | minimal
+profile: productivity
+
+# Session parameters — drive the workflow_dispatch inputs and keepalive loop.
+session:
+  hours: 6                  # Session length in hours (GitHub caps runners at 6h)
+  username: rdpuser         # RDP username inside the runner
+  password: ""              # Empty = generated at session start, shipped in artifact
+  domain: ""                # Leave empty for non-AD setups
+
+# Tunnel configuration — NO NGROK.
+# `priority` is the ordered list of providers tried at session start. The
+# first one to return a valid URL wins; the rest are left untouched.
+tunnel:
+  priority:
+    - serveo
+    - localhost.run
+    - cloudflare
+    - localtunnel
+  providers:
+    serveo:
+      server: serveo.net
+      port: 22
+      remote_port: 0          # 0 = let serveo pick a free port
+      ssh_opts:
+        - "-o StrictHostKeyChecking=no"
+        - "-o ServerAliveInterval=30"
+        - "-o ExitOnForwardFailure=yes"
+    localhost.run:
+      server: nokey@localhost.run
+      port: 22
+      ssh_opts:
+        - "-o StrictHostKeyChecking=no"
+    cloudflare:
+      bin: cloudflared
+      protocol: quic          # quic | http2
+      edge_ip: ""             # Optional: pin to a specific edge IP
+    localtunnel:
+      bin: lt
+      subdomain: ""           # Optional: request a specific subdomain
+
+# Software packages installed inside the runner at session start.
+# This list is the *default* (cross-platform) — per-platform files override.
+software:
+  - xfreerdp2-x11
+  - openssh-client
+  - socat
+  - apache2-utils
+  - curl
+  - jq
+
+# Optimization profile applied to xfreerdp at connect time.
+# This block mirrors rdp_toolkit.config.PROFILES["productivity"].
+rdp:
+  description: "Balanced for daily productivity RDP work"
+  xfreerdp_args:
+    - "/cert:ignore"
+    - "+fonts"
+    - "+aero"
+    - "+window-drag"
+    - "+menu-anims"
+    - "/compression-level:2"
+    - "/gfx:AVC444"
+  resolution: "1920x1080"
+  color_depth: 32
+  audio: "sys:alsa"
+
+# Notification channels — all disabled by default. Fill in the relevant
+# fields and flip `enabled: true` to turn a channel on. The manager auto-
+# discovers which channels are configured.
+notify:
+  telegram:
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+  discord:
+    enabled: false
+    webhook_url: ""
+  slack:
+    enabled: false
+    webhook_url: ""
+    channel: ""
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 587
+    smtp_user: ""
+    smtp_pass: ""
+    to: ""
+    from: ""
+
+# Docker VM orchestration — disabled by default on Android (no Docker).
+vm:
+  enabled: true
+  default: kali               # VM name used when `rdp-toolkit vm start` is called with no arg
+  docker_image_prefix: "rdp-toolkit/"
+  compose_file: "docker/docker-compose.yml"
+  healthcheck_timeout: 120    # seconds to wait for a container to become `healthy`
+
+# GitHub Actions runner configuration — env vars override these at runtime.
+github:
+  repo: "usekarne/github-rdp-mega-toolkit"
+  branch: "main"
+  workflow: "lite-rdp.yml"          # default workflow for `start`
+  rotate_workflow: "credential-rotate.yml"
+  credentials_artifact: "rdp-credentials"
+  api_url: "https://api.github.com"
+  pat_env_var: "GH_PAT"             # which env var to read the PAT from
+
+# Logging — controls the CLI's prefixed log lines.
+logging:
+  level: INFO                 # DEBUG | INFO | WARN | ERROR
+  prefix_info: "[INFO] "
+  prefix_ok:   "[OK]   "
+  prefix_warn: "[WARN] "
+  prefix_err:  "[ERR]  "

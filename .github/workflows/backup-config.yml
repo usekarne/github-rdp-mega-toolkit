@@ -1,0 +1,88 @@
+name: "Backup Config v9.0"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  backup-config:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Snapshot registry, services, and installed software
+        shell: pwsh
+        run: |
+          $stamp = (Get-Date).ToString("yyyyMMdd-HHmmss")
+          $backupDir = "config-backup-$stamp"
+          New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+
+          # Registry snapshot (key system + RDP-related branches)
+          $regFile = "$backupDir\registry-snapshot.reg"
+          $regKeys = @(
+            "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server",
+            "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+            "HKLM\SYSTEM\CurrentControlSet\Control\Lsa"
+          )
+          foreach ($k in $regKeys) {
+            reg export "$k" "$backupDir\$($k -replace '[\\:]','_').reg" /y 2>$null | Out-Null
+          }
+          # Combined top-level summary
+          Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" |
+            Select-Object ProductName, DisplayVersion, CurrentBuild |
+            Out-File -Encoding ASCII "$backupDir\registry-summary.txt"
+
+          # Services snapshot
+          Get-Service | Select-Object Name, Status, StartType |
+            Sort-Object Name |
+            Out-File -Encoding ASCII "$backupDir\services-snapshot.txt"
+
+          # Installed software snapshot
+          Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" 2>$null |
+            Where-Object { $_.DisplayName } |
+            Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+            Sort-Object DisplayName |
+            Out-File -Encoding ASCII "$backupDir\installed-software.txt"
+
+          # Winget list snapshot (best-effort)
+          try {
+            winget export -o "$backupDir\winget-export.json" --accept-source-agreements 2>$null | Out-Null
+          } catch {
+            "winget export not available" | Out-File -Encoding ASCII "$backupDir\winget-export.txt"
+          }
+
+          # Compose manifest
+          $manifest = "Backup stamp: $stamp`r`nGenerated: $(Get-Date -Format o)`r`n"
+          $manifest += "Files:`r`n"
+          Get-ChildItem $backupDir | ForEach-Object { $manifest += "  - $($_.Name)`r`n" }
+          $manifest | Out-File -Encoding ASCII "$backupDir\MANIFEST.txt"
+
+          Write-Host "Backup directory: $backupDir"
+          Get-ChildItem $backupDir | Format-Table Name, Length
+
+      - name: Upload backup artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: config-backup-${{ github.run_id }}
+          path: config-backup-*/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Directory -Filter "config-backup-*" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Backup workflow finished."

@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+rm -f /usr/local/bin/rdp-toolkit
+rm -f /usr/local/bin/rdp-fetch-creds
+rm -f /usr/local/bin/rdp-bridge
+rm -rf /opt/github-rdp-toolkit
+echo "github-rdp-toolkit removed."

@@ -1,0 +1,23 @@
+Package: github-rdp-toolkit
+Version: 9.0.0
+Architecture: all
+Maintainer: usekarne <usekarne@users.noreply.github.com>
+Section: net
+Priority: optional
+Depends: bash, openssh-client, curl, python3, freerdp2-x11
+Recommends: xfce4, xrdp
+Suggests: cloudflared, docker.io, vagrant
+Description: GitHub RDP Mega Toolkit v9.0
+ Cross-platform RDP session manager with Serveo/localhost.run/Cloudflare
+ tunnel support. Spins up Windows or Linux RDP sessions on GitHub Actions
+ runners, fetches credentials via artifact, and connects with xfreerdp.
+ .
+ Features:
+  * Multi-provider tunnel failover (Serveo -> localhost.run -> Cloudflare)
+  * 25+ GitHub Actions workflows
+  * Cross-platform: Kali, Ubuntu, Windows, Android (Termux)
+  * .deb/.msi package builders
+  * Virtual environments (Docker, Vagrant, Podman)
+  * Auto-config generation
+  * Password rotation, health monitoring, notifications
+  * Client CLI suite (Python, Bash, PowerShell)

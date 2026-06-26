@@ -1,0 +1,74 @@
+name: "Kali Linux RDP v9.0 (6hr)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      kali_metapackage:
+        description: "Kali metapackage to install"
+        required: false
+        type: choice
+        options:
+          - kali-linux-large
+          - kali-linux-default
+          - kali-linux-headless
+          - kali-linux-all
+        default: kali-linux-large
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  kali-rdp:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 375
+    env:
+      RDP_MASTER_PASSWORD: ${{ secrets.RDP_MASTER_PASSWORD }}
+      TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+      SESSION_PROFILE: "kali"
+      KALI_METAPACKAGE: ${{ inputs.kali_metapackage }}
+      SESSION_HOURS: "6"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup RDP (xrdp + kali-linux-large + kali-desktop-xfce)"
+        shell: bash
+        run: |
+          chmod +x core/setup-rdp.sh
+          ./core/setup-rdp.sh
+
+      - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
+        shell: bash
+        run: |
+          chmod +x core/setup-tunnel.sh
+          ./core/setup-tunnel.sh
+
+      - name: "Upload Credentials"
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: "Keep Alive 6 Hours"
+        shell: bash
+        run: |
+          chmod +x core/keepalive.sh
+          ./core/keepalive.sh
+
+      - name: "Cleanup"
+        if: always()
+        shell: bash
+        run: |
+          chmod +x core/cleanup.sh
+          ./core/cleanup.sh

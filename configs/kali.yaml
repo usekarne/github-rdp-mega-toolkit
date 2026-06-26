@@ -1,0 +1,96 @@
+# =============================================================================
+# kali.yaml — Kali Linux overrides on top of configs/default.yaml.
+#
+# Kali ships with the kali-linux-large metapackage (~3 GB of tools) plus
+# kali-desktop-xfce for the desktop environment. We override the software
+# list to install Kali-specific packages and pin the serveo tunnel as the
+# first choice (it works best from Kali runners in GitHub's US datacenters).
+# =============================================================================
+
+version: "9.0.0"
+platform: kali
+profile: productivity
+
+session:
+  hours: 6
+  username: kali
+  password: ""
+  domain: ""
+
+# Serveo has the lowest latency from GitHub Actions runners to most RDP
+# clients. Cloudflare is a solid second for non-USA clients.
+tunnel:
+  priority:
+    - serveo
+    - localhost.run
+    - cloudflare
+    - localtunnel
+
+# Kali-specific install list — pulled in via `apt` inside the runner.
+# The `kali-linux-large` metapackage is what makes a "Kali" install actually
+# Kali; `kali-desktop-xfce` gives us the XFCE desktop that xRDP exposes.
+software:
+  - kali-linux-large
+  - kali-desktop-xfce
+  - xfreerdp2-x11
+  - openssh-client
+  - socat
+  - apache2-utils
+  - curl
+  - jq
+  - htop
+  - net-tools
+  - dnsutils
+  - tcpdump
+  - nmap
+  - wireshark
+  - metasploit-framework
+  - burpsuite
+
+# Same profile args as default — productivity is the sensible baseline.
+# Override with `--profile gaming` or `--profile minimal` at the CLI.
+rdp:
+  description: "Balanced for daily productivity RDP work (Kali)"
+  xfreerdp_args:
+    - "/cert:ignore"
+    - "+fonts"
+    - "+aero"
+    - "+window-drag"
+    - "+menu-anims"
+    - "/compression-level:2"
+    - "/gfx:AVC444"
+  resolution: "1920x1080"
+  color_depth: 32
+  audio: "sys:alsa"
+
+# Notify channels — empty by default, configure per-deployment.
+notify:
+  telegram:
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+  discord:
+    enabled: false
+    webhook_url: ""
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 587
+    to: ""
+
+# Docker VMs are fully supported on Kali (it's our recommended local-dev OS).
+vm:
+  enabled: true
+  default: kali
+  docker_image_prefix: "rdp-toolkit/"
+  compose_file: "docker/docker-compose.yml"
+  healthcheck_timeout: 120
+
+github:
+  repo: "usekarne/github-rdp-mega-toolkit"
+  branch: "main"
+  workflow: "kali-rdp.yml"          # use the Kali-specific workflow
+  rotate_workflow: "credential-rotate.yml"
+  credentials_artifact: "rdp-credentials"
+  api_url: "https://api.github.com"
+  pat_env_var: "GH_PAT"

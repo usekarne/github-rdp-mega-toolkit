@@ -1,0 +1,92 @@
+{
+  "version": "9.0.0",
+  "description": "Windows optimization profiles for RDP Mega Toolkit v9.0. Three presets: productivity (balanced), gaming (max performance, RFX graphics), and minimal (max free RAM).",
+  "profiles": {
+    "productivity": {
+      "description": "Balanced profile for general productivity work.",
+      "disable_services": [
+        "SysMain",
+        "DiagTrack",
+        "WSearch",
+        "Fax",
+        "RetailDemo"
+      ],
+      "enable_services": [
+        "TermService",
+        "Audiosrv",
+        "BFE",
+        "Dnscache"
+      ],
+      "visual_effects": "let_windows_choose",
+      "disable_defender": false,
+      "disable_uac_prompts": false,
+      "high_performance_power": true,
+      "disable_sleep": true,
+      "additional_tweaks": {
+        "disable_hibernation": true,
+        "disable_telemetry": true,
+        "set_dns_cache_size": 2048
+      }
+    },
+    "gaming": {
+      "description": "Max-performance profile optimized for gaming. No software install, RFX graphics.",
+      "disable_services": [
+        "SysMain",
+        "DiagTrack",
+        "WSearch",
+        "Fax",
+        "RetailDemo",
+        "Spooler",
+        "WerSvc",
+        "DiagSvc"
+      ],
+      "enable_services": [
+        "TermService",
+        "Audiosrv",
+        "BFE"
+      ],
+      "visual_effects": "best_performance",
+      "disable_defender": true,
+      "disable_uac_prompts": true,
+      "high_performance_power": true,
+      "disable_sleep": true,
+      "additional_tweaks": {
+        "disable_game_bar": false,
+        "enable_game_mode": true,
+        "disable_hibernation": true,
+        "disable_telemetry": true,
+        "set_gfx_mode": "RFX"
+      }
+    },
+    "minimal": {
+      "description": "Minimal profile to maximize free RAM. No software install.",
+      "disable_services": [
+        "SysMain",
+        "DiagTrack",
+        "WSearch",
+        "Fax",
+        "RetailDemo",
+        "Spooler",
+        "WerSvc",
+        "TabletInputService",
+        "PrintNotify",
+        "PcaSvc"
+      ],
+      "enable_services": [
+        "TermService"
+      ],
+      "visual_effects": "best_performance",
+      "disable_defender": true,
+      "disable_uac_prompts": true,
+      "high_performance_power": true,
+      "disable_sleep": true,
+      "additional_tweaks": {
+        "disable_themes": true,
+        "disable_aeropeek": true,
+        "disable_transparency": true,
+        "disable_hibernation": true,
+        "disable_telemetry": true
+      }
+    }
+  }
+}

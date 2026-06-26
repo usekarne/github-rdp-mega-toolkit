@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GitHub RDP Mega Toolkit — Chocolatey package specification
+  ===========================================================
+  Build: choco pack chocolatey.nuspec --outputdirectory .\output
+  Publish (maintainer only):
+    choco push .\output\github-rdp-mega-toolkit.9.0.0.nupkg --source https://push.chocolatey.org/ --api-key <KEY>
+
+  Local test install:
+    choco install github-rdp-mega-toolkit --source .\output -y
+-->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>github-rdp-mega-toolkit</id>
+    <version>9.0.0</version>
+    <title>GitHub RDP Mega Toolkit</title>
+    <authors>usekarne</authors>
+    <projectUrl>https://github.com/usekarne/github-rdp-mega-toolkit</projectUrl>
+    <packageSourceUrl>https://github.com/usekarne/github-rdp-mega-toolkit</packageSourceUrl>
+    <iconUrl>https://raw.githubusercontent.com/usekarne/github-rdp-mega-toolkit/main/docs/assets/icon.png</iconUrl>
+    <licenseUrl>https://raw.githubusercontent.com/usekarne/github-rdp-mega-toolkit/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/usekarne/github-rdp-mega-toolkit</projectSourceUrl>
+    <docsUrl>https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/docs/WINDOWS.md</docsUrl>
+    <bugTrackerUrl>https://github.com/usekarne/github-rdp-mega-toolkit/issues</bugTrackerUrl>
+    <tags>rdp github-actions cloudflared mstsc xfreerdp remote-desktop tunnel serveo cross-platform admin</tags>
+    <summary>Cross-platform RDP automation toolkit for GitHub Actions runners (Windows client installer).</summary>
+    <description>
+      The GitHub RDP Mega Toolkit automates the entire workflow of bringing up
+      an RDP-capable environment on GitHub Actions runners and connecting to
+      it from a Windows client using mstsc.exe or xfreerdp.
+
+      This Chocolatey package installs:
+        * PowerShell install/uninstall scripts
+        * Windows-specific configs (RDP registry, firewall, power plan,
+          Defender exclusions, visual effects, mstsc template)
+        * Windows client connection scripts (mstsc + xfreerdp + cloudflared
+          bridge + pure-PowerShell credential fetcher)
+        * Auto-start scheduled-task setup for tunnel persistence
+        * Optional cloudflared.exe download (use -InstallCloudflared)
+
+      Tunnels supported: Serveo (primary), localhost.run (secondary),
+      Cloudflare (fallback). No ngrok dependency.
+    </description>
+    <releaseNotes>
+      v9.0.0 (MEGA rewrite):
+        * Multi-agent rewrite with cross-platform support (Kali/Windows/Android)
+        * Pure PowerShell fetch-creds (no Python dependency on client)
+        * Added WiX MSI build pipeline and Chocolatey/Scoop/Winget manifests
+        * Reversible registry edits; full uninstall path
+    </releaseNotes>
+    <dependencies>
+      <dependency id="powershell-portable" version="7.2.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+    <file src="..\configs\**" target="tools\configs" />
+    <file src="..\scripts\**" target="tools\scripts" />
+  </files>
+</package>

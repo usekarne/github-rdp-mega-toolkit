@@ -1,0 +1,95 @@
+name: "Multi Kali Linux RDP v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_count:
+        description: "Number of parallel Kali sessions (1-3)"
+        required: false
+        default: "2"
+      duration_hours:
+        description: "Session duration per runner (hours)"
+        required: false
+        default: "6"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: multi-kali-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  DURATION_HOURS: ${{ github.event.inputs.duration_hours || '6' }}
+
+jobs:
+  multi-kali-rdp:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 420
+    strategy:
+      max-parallel: 3
+      fail-fast: false
+      matrix:
+        index: [0, 1, 2]
+    steps:
+      - name: Skip if matrix index exceeds requested runner count
+        if: matrix.index >= inputs.runner_count
+        shell: bash
+        run: |
+          echo "Matrix index ${{ matrix.index }} exceeds requested runner count (${{ inputs.runner_count }}) — skipping"
+          exit 0
+
+      - name: Checkout
+        if: matrix.index < inputs.runner_count
+        uses: actions/checkout@v4
+
+      - name: Install Kali + XFCE + xrdp (matrix ${{ matrix.index }})
+        if: matrix.index < inputs.runner_count
+        shell: bash
+        run: |
+          sudo bash ./core/bash/setup-rdp.sh --profile kali --duration "$DURATION_HOURS" --instance ${{ matrix.index }}
+
+      - name: Install Kali tools (matrix ${{ matrix.index }})
+        if: matrix.index < inputs.runner_count
+        shell: bash
+        run: |
+          sudo bash ./core/bash/install-software.sh --category kali --instance ${{ matrix.index }}
+
+      - name: Setup tunnel (matrix ${{ matrix.index }})
+        if: matrix.index < inputs.runner_count
+        shell: bash
+        env:
+          TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+        run: |
+          bash ./core/bash/setup-tunnel.sh --providers "$TUNNEL_PROVIDERS" --local-port 3389 --instance ${{ matrix.index }}
+
+      - name: Keepalive loop (matrix ${{ matrix.index }})
+        if: matrix.index < inputs.runner_count
+        shell: bash
+        run: |
+          bash ./core/bash/keepalive.sh --duration-hours "$DURATION_HOURS" --instance ${{ matrix.index }}
+
+      - name: Upload RDP credentials artifact (matrix ${{ matrix.index }})
+        if: always() && (matrix.index < inputs.runner_count)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials-multi-kali-${{ matrix.index }}
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Cleanup session (matrix ${{ matrix.index }})
+        if: always() && (matrix.index < inputs.runner_count)
+        shell: bash
+        run: |
+          sudo bash ./core/bash/cleanup.sh --force --instance ${{ matrix.index }}

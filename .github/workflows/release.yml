@@ -1,0 +1,107 @@
+name: "Release v9.0"
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v9.0.0)"
+        required: true
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF##*/}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Releasing tag: $TAG"
+
+      - name: Download all recent workflow artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          REPO="${{ github.repository }}"
+          # Pull artifacts from recent runs of build-deb and build-msi workflows
+          for wf in build-deb.yml build-msi.yml; do
+            RUN_ID=$(gh run list --repo "$REPO" --workflow "$wf" --status completed --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "")
+            if [ -n "$RUN_ID" ]; then
+              echo "Downloading artifacts from $wf run $RUN_ID"
+              gh run download "$RUN_ID" --repo "$REPO" --dir "release-assets/$wf" || echo "Download failed for $wf"
+            fi
+          done
+          find release-assets -type f | head -50
+
+      - name: Create GitHub Release with artifacts
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Build release notes
+          cat > release-notes.md << EOF
+          # RDP Mega Toolkit $TAG
+
+          This release ships the v9.0 MEGA rewrite artifacts:
+
+          - Windows MSI installer (when WiX is available)
+          - Debian (.deb) package for Kali/Ubuntu
+          - JSON configuration pack
+          - GitHub Actions workflow bundle
+
+          ## Tunnel providers
+          Serveo (primary), localhost.run (secondary), Cloudflare (fallback).
+          NGROK IS NOT USED.
+
+          ## Workflow
+          See \`docs/\` for installation and usage instructions.
+          EOF
+          # Create or update release
+          gh release create "$TAG" \
+            --repo "$REPO" \
+            --title "RDP Mega Toolkit $TAG" \
+            --notes-file release-notes.md \
+            --generate-notes || gh release upload "$TAG" --repo "$REPO" release-notes.md --clobber
+
+          # Attach any downloaded artifacts
+          if [ -d release-assets ]; then
+            find release-assets -type f -print0 | while IFS= read -r -d '' f; do
+              echo "Uploading $f"
+              gh release upload "$TAG" "$f" --repo "$REPO" --clobber || echo "Failed to upload $f"
+            done
+          fi
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -rf release-assets release-notes.md
+          echo "Release workflow complete."

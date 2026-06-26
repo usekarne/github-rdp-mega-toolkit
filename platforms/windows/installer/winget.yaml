@@ -1,0 +1,159 @@
+# Winget manifest for GitHub RDP Mega Toolkit
+# ============================================================
+# Submission target: https://github.com/microsoft/winget-pkgs
+# Schema:            https://aka.ms/winget-manifest.single (1.5)
+#
+# Install locally (single manifest mode):
+#     winget install --manifest .\winget.yaml
+# Or once submitted to winget-pkgs:
+#     winget install usekarne.GitHubRDPMegaToolkit
+#
+# Validation:
+#     winget validate .\winget.yaml
+#
+# Note: The winget-pkgs repo splits manifests into three files
+# (root, .installer, .locale.en-US) for submission. This single-file
+# form is provided here for convenience and local testing.
+# ============================================================
+PackageIdentifier: usekarne.GitHubRDPMegaToolkit
+PackageVersion: 9.0.0
+PackageLocale: en-US
+Publisher: usekarne
+PublisherUrl: https://github.com/usekarne
+PublisherSupportUrl: https://github.com/usekarne/github-rdp-mega-toolkit/issues
+PrivacyUrl: https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/docs/SECURITY.md
+Author: usekarne
+PackageName: GitHub RDP Mega Toolkit
+PackageUrl: https://github.com/usekarne/github-rdp-mega-toolkit
+License: MIT
+LicenseUrl: https://raw.githubusercontent.com/usekarne/github-rdp-mega-toolkit/main/LICENSE
+Copyright: Copyright (c) 2024 usekarne
+CopyrightUrl: https://raw.githubusercontent.com/usekarne/github-rdp-mega-toolkit/main/LICENSE
+ShortDescription: Cross-platform RDP automation toolkit for GitHub Actions runners (Windows client).
+Description: |
+  The GitHub RDP Mega Toolkit automates bringing up an RDP-capable environment
+  on GitHub Actions runners and connecting to it from a Windows client using
+  mstsc.exe or xfreerdp.
+
+  Tunnels supported: Serveo (primary), localhost.run (secondary), Cloudflare
+  (fallback). No ngrok dependency.
+
+  The Windows installer:
+    * Installs to %ProgramFiles%\GitHubRDPToolkit
+    * Adds install dir to PATH
+    * Creates Start Menu + Desktop shortcuts
+    * Registers an uninstaller visible in Add/Remove Programs
+    * Optionally downloads and installs cloudflared.exe for Cloudflare fallback
+Moniker: github-rdp-mega-toolkit
+Tags:
+  - rdp
+  - github-actions
+  - cloudflared
+  - mstsc
+  - xfreerdp
+  - remote-desktop
+  - tunnel
+  - serveo
+  - cross-platform
+  - admin
+ReleaseNotes: |
+  v9.0.0 (MEGA rewrite):
+    * Multi-agent rewrite with cross-platform support (Kali/Windows/Android)
+    * Pure PowerShell fetch-creds (no Python dependency on client)
+    * Added WiX MSI build pipeline and Chocolatey/Scoop/Winget manifests
+    * Reversible registry edits; full uninstall path
+ReleaseNotesUrl: https://github.com/usekarne/github-rdp-mega-toolkit/releases/tag/v9.0.0
+PurchaseUrl: null
+InstallationNotes: |
+  After install, open a NEW terminal then run 'rdp-toolkit doctor' to verify
+  the environment. To use Cloudflare fallback, install cloudflared.exe
+  separately (winget install Cloudflare.cloudflared) or pass
+  -InstallCloudflared to the bundled install.ps1.
+Documentations:
+  - DocumentLabel: Windows Guide
+    DocumentUrl: https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/docs/WINDOWS.md
+  - DocumentLabel: Tunnels Guide
+    DocumentUrl: https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/docs/TUNNELS.md
+  - DocumentLabel: Security Notes
+    DocumentUrl: https://github.com/usekarne/github-rdp-mega-toolkit/blob/main/docs/SECURITY.md
+ManifestType: merged
+ManifestVersion: 1.5.0
+
+Installers:
+  - InstallerLocale: en-US
+    Architecture: x64
+    InstallerType: wix
+    InstallerUrl: https://github.com/usekarne/github-rdp-mega-toolkit/releases/download/v9.0.0/GitHubRDPToolkit-9.0.0.msi
+    InstallerSha256: "0000000000000000000000000000000000000000000000000000000000000000"
+    # Sha256 above MUST be computed at release time and updated in the
+    # winget-pkgs submission PR. Replace with the actual hash.
+    Scope: machine
+    InstallModes:
+      - interactive
+      - silent
+      - silentWithProgress
+    Installers:
+      - InstallerType: wix
+        InstallerSwitches:
+          Interactive: ""
+          Silent: /qn /norestart
+          SilentWithProgress: /qb /norestart
+          Log: /log "<LOGPATH>"
+        ExpectedReturnCodes:
+          - InstallerReturnCode: 0
+            ReturnResponse: success
+          - InstallerReturnCode: 1602
+            ReturnResponse: userCancelled
+          - InstallerReturnCode: 1603
+            ReturnResponse: installInProgress
+          - InstallerReturnCode: 3010
+            ReturnResponse: rebootRequired
+        UpgradeBehavior: install
+        ProductCode: "{8E5B7C2A-1F4D-4B6C-9E8A-3D2F1A4B5C6D}"
+        AppsAndFeaturesEntries:
+          - DisplayName: "GitHub RDP Mega Toolkit"
+            DisplayVersion: "9.0.0"
+            Publisher: "usekarne"
+            ProductCode: "{8E5B7C2A-1F4D-4B6C-9E8A-3D2F1A4B5C6D}"
+            UpgradeCode: "{8E5B7C2A-1F4D-4B6C-9E8A-3D2F1A4B5C6D}"
+  - InstallerLocale: en-US
+    Architecture: x64
+    InstallerType: zip
+    InstallerUrl: https://github.com/usekarne/github-rdp-mega-toolkit/releases/download/v9.0.0/github-rdp-mega-toolkit-9.0.0-windows.zip
+    InstallerSha256: "0000000000000000000000000000000000000000000000000000000000000000"
+    NestedInstallerType: portable
+    NestedInstallerFiles:
+      - RelativeFilePath: "bin\\rdp-toolkit.cmd"
+        PortableCommandAlias: "rdp-toolkit"
+    Scope: user
+    InstallModes:
+      - silent
+      - interactive
+    UpgradeBehavior: uninstallPrevious
+
+InstallerSwitches:
+  Custom: ""
+  Silent: /qn /norestart
+  SilentWithProgress: /qb /norestart
+  Log: /log "<LOGPATH>"
+
+ExpectedReturnCodes:
+  - InstallerReturnCode: 0
+    ReturnResponse: success
+  - InstallerReturnCode: 1602
+    ReturnResponse: userCancelled
+  - InstallerReturnCode: 1603
+    ReturnResponse: installInProgress
+  - InstallerReturnCode: 3010
+    ReturnResponse: rebootRequired
+
+UpgradeBehavior: install
+Commands:
+  - rdp-toolkit
+Protocols:
+  - rdp
+FileExtensions:
+  - rdp
+  - ps1
+Capabilities:
+  - remoteDesktop

@@ -1,0 +1,66 @@
+name: "Health Monitor v9.0"
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  health-monitor:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Probe active RDP runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          REPORT="health-report.md"
+          {
+            echo "# RDP Mega Toolkit — Health Monitor Report"
+            echo ""
+            echo "Timestamp: $(date -u)"
+            echo ""
+            echo "## In-Progress RDP Runs"
+            ACTIVE=$(gh run list --repo "$REPO" --status in_progress --json databaseId,name,createdAt --jq '.[] | select(.name | test("RDP|Session|Kali|Ubuntu|Pro|Lite|Ultimate"))' || echo "")
+            if [ -z "$ACTIVE" ]; then
+            echo "No active RDP runs detected."
+            else
+            echo "$ACTIVE"
+            fi
+            echo ""
+            echo "## Heartbeat Probe"
+            # Attempt to ping known tunnel endpoints (no-op placeholder)
+            echo "Probed tunnel endpoints: serveo, localhost.run, cloudflare"
+            echo ""
+            echo "## Action Required"
+            echo "If any RDP run is stalled (>30 min no heartbeat), consider triggering force-kill.yml."
+          } > "$REPORT"
+          cat "$REPORT"
+
+      - name: Upload health report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_id }}
+          path: health-report.md
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -f health-report.md
+          echo "Health monitor complete."

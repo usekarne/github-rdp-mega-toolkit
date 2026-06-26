@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=GitHub RDP Toolkit
+Comment=Manage GitHub Actions RDP sessions
+Exec=/opt/github-rdp-toolkit/tools/bash/rdp-cli.sh status
+Icon=utilities-terminal
+Terminal=true
+Type=Application
+Categories=Network;RemoteAccess;
+Keywords=rdp;remote;github;tunnel;

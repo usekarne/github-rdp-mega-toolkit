@@ -1,0 +1,64 @@
+name: "Status Check v9.0"
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+
+jobs:
+  status-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate status report
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          REPORT="status-report.md"
+          {
+            echo "# RDP Mega Toolkit — Status Report"
+            echo ""
+            echo "Generated: $(date -u)"
+            echo "Repository: $REPO"
+            echo ""
+            echo "## Active Runs (in_progress)"
+            gh run list --repo "$REPO" --status in_progress --limit 30 || echo "Unable to fetch"
+            echo ""
+            echo "## Queued Runs"
+            gh run list --repo "$REPO" --status queued --limit 30 || echo "Unable to fetch"
+            echo ""
+            echo "## Recently Completed (last 10)"
+            gh run list --repo "$REPO" --status completed --limit 10 || echo "Unable to fetch"
+            echo ""
+            echo "## Workflow Summary"
+            gh workflow list --repo "$REPO" || echo "Unable to fetch"
+          } > "$REPORT"
+          cat "$REPORT"
+
+      - name: Upload status report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-report-${{ github.run_id }}
+          path: status-report.md
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          rm -f status-report.md
+          echo "Status check complete."

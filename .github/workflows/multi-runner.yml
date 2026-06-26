@@ -1,0 +1,109 @@
+name: "Multi-Runner Pool v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_count:
+        description: "Number of parallel RDP runners (1-5)"
+        required: false
+        type: choice
+        default: "3"
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+      session_hours:
+        description: "Session duration in hours (max 6)"
+        required: false
+        type: string
+        default: "6"
+      optimize_profile:
+        description: "Optimization profile"
+        required: false
+        type: choice
+        default: productivity
+        options:
+          - productivity
+          - gaming
+          - minimal
+          - none
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  multi-runner-rdp:
+    runs-on: windows-latest
+    timeout-minutes: 400
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        index: [0, 1, 2, 3, 4]
+    env:
+      RDP_MASTER_PASSWORD: ${{ secrets.RDP_MASTER_PASSWORD }}
+      TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+      SESSION_HOURS: ${{ inputs.session_hours }}
+      OPTIMIZE_PROFILE: ${{ inputs.optimize_profile }}
+      RUNNER_INDEX: ${{ matrix.index }}
+      RUNNER_LABEL: "runner-${{ matrix.index }}"
+    steps:
+      - name: "Skip if matrix.index >= runner_count"
+        id: skip
+        if: matrix.index >= ${{ inputs.runner_count }}
+        shell: bash
+        run: echo "skip=true" >> $GITHUB_OUTPUT
+
+      - name: "Checkout"
+        if: steps.skip.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: "Setup RDP"
+        if: steps.skip.outputs.skip != 'true'
+        shell: pwsh
+        run: .dp_toolkitre_ps\setup-rdp.ps1
+
+      - name: "Optimize Windows"
+        if: steps.skip.outputs.skip != 'true' && inputs.optimize_profile != 'none'
+        shell: pwsh
+        run: .dp_toolkitre_ps\optimize-windows.ps1
+
+      - name: "Install Software"
+        if: steps.skip.outputs.skip != 'true'
+        shell: pwsh
+        run: .dp_toolkitre_ps\install-software.ps1
+
+      - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
+        if: steps.skip.outputs.skip != 'true'
+        shell: pwsh
+        run: .dp_toolkitre_ps\setup-tunnel.ps1
+
+      - name: "Upload Credentials"
+        if: steps.skip.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials-runner-${{ matrix.index }}
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: "Keep Alive"
+        if: steps.skip.outputs.skip != 'true'
+        shell: pwsh
+        run: .dp_toolkitre_ps\keepalive.ps1
+
+      - name: "Cleanup"
+        if: always() && steps.skip.outputs.skip != 'true'
+        shell: pwsh
+        run: .dp_toolkitre_ps\cleanup.ps1

@@ -1,0 +1,75 @@
+name: "Minimal Session v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_hours:
+        description: "Session duration (hours)"
+        required: false
+        default: "6"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: minimal-session-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  SESSION_PROFILE: "minimal"
+  DURATION_HOURS: ${{ github.event.inputs.duration_hours || '6' }}
+
+jobs:
+  minimal-session:
+    runs-on: windows-latest
+    timeout-minutes: 400
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup RDP session (minimal profile, no software install)
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\setup-rdp.ps1 -Profile $env:SESSION_PROFILE -DurationHours $env:DURATION_HOURS -SkipSoftwareInstall
+
+      - name: Apply minimal optimization (max free RAM)
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\optimize-windows.ps1 -Profile $env:SESSION_PROFILE
+
+      - name: Setup tunnel
+        shell: pwsh
+        env:
+          TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+        run: |
+          pwsh .\core\powershell\setup-tunnel.ps1 -Providers $env:TUNNEL_PROVIDERS -LocalPort 3389
+
+      - name: Keepalive loop
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\keepalive.ps1 -DurationHours $env:DURATION_HOURS
+
+      - name: Upload RDP credentials artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials-minimal
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Cleanup session
+        if: always()
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\cleanup.ps1 -Force

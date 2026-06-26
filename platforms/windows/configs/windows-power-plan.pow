@@ -1,0 +1,136 @@
+Windows Registry Editor Version 5.00
+
+; =====================================================================
+; GitHub RDP Mega Toolkit v9.0.0
+; Windows High Performance Power Plan (.pow)
+; =====================================================================
+; Purpose:
+;   High-Performance power plan tuned for always-on RDP sessions running
+;   on GitHub Actions runners or any Windows host. Disables sleep/hibernate
+;   and forces maximum CPU performance.
+;
+; GUID of the built-in High Performance plan: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+;
+; To apply as a TRUE binary .pow file (powercfg-compatible):
+;   1. Apply this .reg-format file:
+;        reg import windows-power-plan.pow
+;   2. Re-export as a binary .pow:
+;        powercfg /export windows-power-plan-binary.pow 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+;   3. Use windows-power-plan-binary.pow with:
+;        powercfg /import windows-power-plan-binary.pow
+;
+; Or just apply these settings via PowerShell:
+;   powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+;   powercfg /change standby-timeout-ac 0
+;   powercfg /change standby-timeout-dc 0
+;   powercfg /change hibernate-timeout-ac 0
+;   powercfg /change hibernate-timeout-dc 0
+;   powercfg /change monitor-timeout-ac 0
+;   powercfg /change monitor-timeout-dc 30
+;   powercfg /change disk-timeout-ac 0
+;   powercfg /change disk-timeout-dc 30
+; =====================================================================
+
+; ----------------------------------------------------------------------
+; Make High Performance the active scheme
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes]
+"ActivePowerScheme"="8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+
+; ----------------------------------------------------------------------
+; High Performance scheme metadata
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c]
+"Description"="@%SystemRoot%\\System32\\powrprof.dll,-43006"
+"FriendlyName"="@%SystemRoot%\\System32\\powrprof.dll,-43005"
+"Hidden"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Subgroup: SETTINGS (no sleep on AC)
+; GUID 238C9FA8-0AAD-41ED-83F4-97BE242C8F20 = Sleep settings
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\238C9FA8-0AAD-41ED-83F4-97BE242C8F20]
+
+; ACe: 29F3A3B6-23DD-4830-A92C-A2F80BA0A0D3 = Sleep idle timeout (AC)
+; Setting to 0 disables sleep.
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\238C9FA8-0AAD-41ED-83F4-97BE242C8F20\29F3A3B6-23DD-4830-A92C-A2F80BA0A0D3]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000000
+
+; Hibernate idle timeout (AC/DC) — set to 0 (never)
+; GUID 9D7815A6-7EE4-497E-8888-515A05F02364
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\238C9FA8-0AAD-41ED-83F4-97BE242C8F20\9D7815A6-7EE4-497E-8888-515A05F02364]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Subgroup: VIDEO (display)
+; GUID 7516B95F-F776-4464-8C53-06167F40CC99 = Video settings
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\7516B95F-F776-4464-8C53-06167F40CC99]
+
+; Turn off display after (AC): 0 (never). DC: 30 minutes (1800 sec).
+; GUID 3C0BC021-C8A8-4E07-A973-6B14CBCB2B7E
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\7516B95F-F776-4464-8C53-06167F40CC99\3C0BC021-C8A8-4E07-A973-6B14CBCB2B7E]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000708
+
+; ----------------------------------------------------------------------
+; Subgroup: DISK
+; GUID 0012EE47-9041-4B5D-9B77-535FBA8B1442 = Disk settings
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\0012EE47-9041-4B5D-9B77-535FBA8B1442]
+
+; Turn off hard disk after (AC): 0 (never). DC: 1800 sec.
+; GUID 6738E2C4-E8A5-4A42-BDB7-8E1BDD6F6F8F
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\0012EE47-9041-4B5D-9B77-535FBA8B1442\6738E2C4-E8A5-4A42-BDB7-8E1BDD6F6F8F]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000708
+
+; ----------------------------------------------------------------------
+; Subgroup: PROCESSOR
+; GUID 54533251-82BE-4824-96C1-47B60B740D00 = Processor settings
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\54533251-82BE-4824-96C1-47B60B740D00]
+
+; Minimum processor state (AC): 100% — keep CPU at full speed.
+; GUID 893DEE8E-2BEF-41E0-89C6-B55D0929964C
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\54533251-82BE-4824-96C1-47B60B740D00\893DEE8E-2BEF-41E0-89C6-B55D0929964C]
+"ACSettingIndex"=dword:00000064
+"DCSettingIndex"=dword:00000005
+
+; Maximum processor state (AC): 100%.
+; GUID BC5038F7-23E0-4960-96DA-33ABAF5935EC
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\54533251-82BE-4824-96C1-47B60B740D00\BC5038F7-23E0-4960-96DA-33ABAF5935EC]
+"ACSettingIndex"=dword:00000064
+"DCSettingIndex"=dword:00000064
+
+; ----------------------------------------------------------------------
+; Subgroup: USB
+; Disable USB selective suspend to avoid device drops during RDP.
+; GUID 2A737441-1930-4402-8D77-B2BEBBA308A3 = USB settings
+; GUID 48E6B7A6-50F5-4782-A5D4-53BB8F07E226 = USB selective suspend
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\2A737441-1930-4402-8D77-B2BEBBA308A3\48E6B7A6-50F5-4782-A5D4-53BB8F07E226]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000000
+
+; ----------------------------------------------------------------------
+; Subgroup: WIRELESS
+; Maximum performance for wireless adapter on AC.
+; GUID 19cbb8fa-5279-450e-9fac-8a3d5fedd0c1 = Wireless settings
+; GUID 12bbebe6-58d6-4636-95bb-3217ef867c1a = Power saving mode
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\19cbb8fa-5279-450e-9fac-8a3d5fedd0c1\12bbebe6-58d6-4636-95bb-3217ef867c1a]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000001
+
+; ----------------------------------------------------------------------
+; Subgroup: PCI Express
+; Disable link state power management for stability.
+; GUID 0012EE47-9041-4B5D-9B77-535FBA8B1442 — already covered
+; GUID EE12F906-D276-4044-B672-EC555A7CE9F9 = ASPM
+; ----------------------------------------------------------------------
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\0012EE47-9041-4B5D-9B77-535FBA8B1442\EE12F906-D276-4044-B672-EC555A7CE9F9]
+"ACSettingIndex"=dword:00000000
+"DCSettingIndex"=dword:00000000

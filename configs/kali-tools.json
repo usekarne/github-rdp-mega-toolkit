@@ -1,0 +1,111 @@
+{
+  "version": "9.0.0",
+  "description": "Kali Linux tool catalog for RDP Mega Toolkit v9.0. Each tool has an install priority (1 = critical, 5 = optional). Use priority to stage installs in CI to minimize runner minutes.",
+  "categories": {
+    "information_gathering": [
+      { "id": "nmap",                "priority": 1, "provider": "apt", "comment": "Network mapper" },
+      { "id": "masscan",             "priority": 2, "provider": "apt", "comment": "Fast port scanner" },
+      { "id": "recon-ng",            "priority": 3, "provider": "apt", "comment": "Web recon framework" },
+      { "id": "maltego",             "priority": 4, "provider": "apt", "comment": "OSINT graphing" },
+      { "id": "theharvester",        "priority": 3, "provider": "apt", "comment": "Email/subdomain harvester" },
+      { "id": "shodan",              "priority": 4, "provider": "pip", "comment": "Shodan CLI" },
+      { "id": "dnsenum",             "priority": 3, "provider": "apt", "comment": "DNS enumeration" },
+      { "id": "fierce",              "priority": 4, "provider": "apt", "comment": "DNS reconnaissance" }
+    ],
+    "vulnerability_analysis": [
+      { "id": "nikto",               "priority": 2, "provider": "apt", "comment": "Web server scanner" },
+      { "id": "nuclei",              "priority": 2, "provider": "apt", "comment": "Template-based vuln scanner" },
+      { "id": "legba",               "priority": 4, "provider": "apt", "comment": "Multiprotocol brute force" },
+      { "id": "lynis",               "priority": 3, "provider": "apt", "comment": "Host auditing" },
+      { "id": "unix-privesc-check",  "priority": 4, "provider": "apt", "comment": "Privilege escalation checker" }
+    ],
+    "web_app_analysis": [
+      { "id": "burpsuite",           "priority": 1, "provider": "apt", "comment": "Web proxy (GUI)" },
+      { "id": "sqlmap",              "priority": 1, "provider": "apt", "comment": "SQL injection tool" },
+      { "id": "wpscan",              "priority": 3, "provider": "apt", "comment": "WordPress scanner" },
+      { "id": "whatweb",             "priority": 3, "provider": "apt", "comment": "Web tech fingerprinter" },
+      { "id": "dirb",                "priority": 3, "provider": "apt", "comment": "Directory brute forcer" },
+      { "id": "gobuster",            "priority": 2, "provider": "apt", "comment": "Dir/file brute forcer (Go)" },
+      { "id": "ffuf",                "priority": 2, "provider": "apt", "comment": "Fast web fuzzer" },
+      { "id": "commix",              "priority": 4, "provider": "apt", "comment": "Command injection tool" },
+      { "id": "OWASP ZAP",           "priority": 2, "provider": "apt", "comment": "OWASP Zed Attack Proxy" }
+    ],
+    "database_assessment": [
+      { "id": "sqlmap",              "priority": 1, "provider": "apt", "comment": "DB injection (also web)" },
+      { "id": "sqlitebrowser",       "priority": 4, "provider": "apt", "comment": "SQLite GUI" },
+      { "id": "mdbtools",            "priority": 5, "provider": "apt", "comment": "MDB tools" }
+    ],
+    "password_attacks": [
+      { "id": "john",                "priority": 1, "provider": "apt", "comment": "John the Ripper" },
+      { "id": "hashcat",             "priority": 1, "provider": "apt", "comment": "GPU hash cracker" },
+      { "id": "hydra",               "priority": 1, "provider": "apt", "comment": "Network logon cracker" },
+      { "id": "medusa",              "priority": 3, "provider": "apt", "comment": "Parallel network logon" },
+      { "id": "crunch",              "priority": 4, "provider": "apt", "comment": "Wordlist generator" },
+      { "id": "cewl",                "priority": 4, "provider": "apt", "comment": "Custom wordlist generator" },
+      { "id": "cupp",                "priority": 5, "provider": "apt", "comment": "User password profiler" }
+    ],
+    "wireless_attacks": [
+      { "id": "aircrack-ng",         "priority": 1, "provider": "apt", "comment": "WiFi auditing suite" },
+      { "id": "wifite",              "priority": 3, "provider": "apt", "comment": "WiFi attack automation" },
+      { "id": "reaver",              "priority": 4, "provider": "apt", "comment": "WPS attack tool" },
+      { "id": "kismet",              "priority": 4, "provider": "apt", "comment": "Wireless detector/sniffer" }
+    ],
+    "reverse_engineering": [
+      { "id": "ghidra",              "priority": 2, "provider": "apt", "comment": "NSA reverse-engineering suite" },
+      { "id": "radare2",             "priority": 2, "provider": "apt", "comment": "RE framework" },
+      { "id": "gdb",                 "priority": 1, "provider": "apt", "comment": "GNU Debugger" },
+      { "id": "strace",              "priority": 3, "provider": "apt", "comment": "Syscall tracer" },
+      { "id": "ltrace",              "priority": 4, "provider": "apt", "comment": "Library call tracer" }
+    ],
+    "exploitation_tools": [
+      { "id": "metasploit-framework","priority": 1, "provider": "apt", "comment": "Exploitation framework" },
+      { "id": "exploitdb",           "priority": 3, "provider": "apt", "comment": "Exploit archive" },
+      { "id": "set",                 "priority": 4, "provider": "apt", "comment": "Social Engineer Toolkit" },
+      { "id": "beef-xss",            "priority": 5, "provider": "apt", "comment": "Browser Exploitation Framework" }
+    ],
+    "sniffing_spoofing": [
+      { "id": "wireshark",           "priority": 1, "provider": "apt", "comment": "Packet analyzer (GUI)" },
+      { "id": "tshark",              "priority": 2, "provider": "apt", "comment": "Wireshark CLI" },
+      { "id": "tcpdump",             "priority": 1, "provider": "apt", "comment": "CLI packet capture" },
+      { "id": "ettercap",            "priority": 3, "provider": "apt", "comment": "MITM suite" },
+      { "id": "responder",           "priority": 3, "provider": "apt", "comment": "LLMNR/NBT-NS poisoner" },
+      { "id": "bettercap",           "priority": 3, "provider": "apt", "comment": "Swiss army knife for attacks" }
+    ],
+    "post_exploitation": [
+      { "id": "mimikatz",            "priority": 2, "provider": "apt", "comment": "Windows credential dumper" },
+      { "id": "empire",              "priority": 4, "provider": "apt", "comment": "PowerShell post-exploitation" },
+      { "id": "powershell-empire",   "priority": 4, "provider": "apt", "comment": "Empire fork" },
+      { "id": "chisel",              "priority": 3, "provider": "apt", "comment": "TCP/UDP tunnel" }
+    ],
+    "forensics": [
+      { "id": "foremost",            "priority": 3, "provider": "apt", "comment": "File carver" },
+      { "id": "scalpel",             "priority": 4, "provider": "apt", "comment": "File carver" },
+      { "id": "binwalk",             "priority": 3, "provider": "apt", "comment": "Firmware analyzer" },
+      { "id": "volatility",          "priority": 3, "provider": "pip", "comment": "Memory forensics" },
+      { "id": "autopsy",             "priority": 4, "provider": "apt", "comment": "Digital forensics GUI" }
+    ],
+    "reporting": [
+      { "id": "cutycapt",            "priority": 5, "provider": "apt", "comment": "Screenshot tool" },
+      { "id": "recordmydesktop",     "priority": 5, "provider": "apt", "comment": "Screen recorder" },
+      { "id": "faraday",             "priority": 5, "provider": "pip", "comment": "Collaboration pentest IDE" }
+    ],
+    "utilities": [
+      { "id": "git",                 "priority": 1, "provider": "apt", "comment": "Version control" },
+      { "id": "curl",                "priority": 1, "provider": "apt", "comment": "HTTP client" },
+      { "id": "wget",                "priority": 1, "provider": "apt", "comment": "HTTP downloader" },
+      { "id": "netcat-traditional",  "priority": 1, "provider": "apt", "comment": "Network swiss army knife" },
+      { "id": "socat",               "priority": 2, "provider": "apt", "comment": "Bidirectional data transfer" },
+      { "id": "python3-pip",         "priority": 1, "provider": "apt", "comment": "Python pip" },
+      { "id": "jq",                  "priority": 2, "provider": "apt", "comment": "JSON processor" },
+      { "id": "tmux",                "priority": 3, "provider": "apt", "comment": "Terminal multiplexer" },
+      { "id": "vim",                 "priority": 3, "provider": "apt", "comment": "Editor" },
+      { "id": "emacs",               "priority": 5, "provider": "apt", "comment": "Editor" }
+    ]
+  },
+  "global": {
+    "default_priority": 3,
+    "parallel_installs": false,
+    "skip_on_failure": true,
+    "log_path": "/tmp/rdp-mega/kali-tools.log"
+  }
+}

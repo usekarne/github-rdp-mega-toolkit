@@ -1,0 +1,155 @@
+name: "Auto Scheduler v9.0"
+
+on:
+  schedule:
+    # Start at 04:00 UTC daily
+    - cron: "0 4 * * *"
+    # Kill at 10:00 UTC daily
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action (start|kill) - 'auto' detects via cron schedule"
+        required: false
+        type: choice
+        default: auto
+        options:
+          - auto
+          - start
+          - kill
+      session_hours:
+        description: "Session duration in hours (for manual start)"
+        required: false
+        type: string
+        default: "6"
+      optimize_profile:
+        description: "Optimization profile (for manual start)"
+        required: false
+        type: choice
+        default: productivity
+        options:
+          - productivity
+          - gaming
+          - minimal
+          - none
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  decide:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      action: ${{ steps.decide.outputs.action }}
+      reason: ${{ steps.decide.outputs.reason }}
+    steps:
+      - name: "Decide Action (start or kill) Based on UTC Hour"
+        id: decide
+        shell: bash
+        run: |
+          FORCE="${{ inputs.action || 'auto' }}"
+          if [ "$FORCE" != "auto" ]; then
+            echo "action=$FORCE" >> $GITHUB_OUTPUT
+            echo "reason=forced via workflow_dispatch input" >> $GITHUB_OUTPUT
+            echo "Decided: $FORCE (forced)"
+            exit 0
+          fi
+          HOUR=$(date -u +%H)
+          # 04:00-09:59 UTC => start window; 10:00-03:59 => kill window
+          if [ "$HOUR" -ge 4 ] && [ "$HOUR" -lt 10 ]; then
+            ACTION="start"
+            REASON="UTC hour $HOUR is within start window (04:00-09:59)"
+          else
+            ACTION="kill"
+            REASON="UTC hour $HOUR is within kill window (10:00-03:59)"
+          fi
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "reason=$REASON" >> $GITHUB_OUTPUT
+          echo "Decided: $ACTION"
+          echo "Reason: $REASON"
+
+  start:
+    needs: decide
+    if: needs.decide.outputs.action == 'start'
+    runs-on: windows-latest
+    timeout-minutes: 410
+    env:
+      RDP_MASTER_PASSWORD: ${{ secrets.RDP_MASTER_PASSWORD }}
+      TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+      SESSION_HOURS: ${{ inputs.session_hours || '6' }}
+      OPTIMIZE_PROFILE: ${{ inputs.optimize_profile || 'productivity' }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup RDP"
+        shell: pwsh
+        run: .\core\setup-rdp.ps1
+
+      - name: "Optimize Windows"
+        if: ${{ (inputs.optimize_profile || 'productivity') != 'none' }}
+        shell: pwsh
+        run: .\core\optimize-windows.ps1
+
+      - name: "Install Software"
+        shell: pwsh
+        run: .\core\install-software.ps1
+
+      - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
+        shell: pwsh
+        run: .\core\setup-tunnel.ps1
+
+      - name: "Upload Credentials"
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: "Keep Alive"
+        shell: pwsh
+        run: .\core\keepalive.ps1
+
+      - name: "Cleanup"
+        if: always()
+        shell: pwsh
+        run: .\core\cleanup.ps1
+
+  kill:
+    needs: decide
+    if: needs.decide.outputs.action == 'kill'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: "Kill In-Progress RDP Runs (skip self)"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          echo "Auto-scheduler kill at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          SELF_RUN_ID="${{ github.run_id }}"
+          for STATUS in in_progress queued waiting; do
+            curl -s -H "Authorization: bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/actions/runs?status=$STATUS&per_page=100" \
+              | python3 -c "import json,sys; [print(r['id']) for r in json.load(sys.stdin).get('workflow_runs',[])]" \
+              | while read RID; do
+                  [ "$RID" = "$SELF_RUN_ID" ] && continue
+                  curl -s -X POST -H "Authorization: bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/$REPO/actions/runs/$RID/cancel" >/dev/null
+                  echo "cancelled $RID"
+                done
+          done
+          echo "Auto-scheduler kill complete"

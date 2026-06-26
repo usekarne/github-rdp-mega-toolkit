@@ -1,0 +1,85 @@
+name: "Dev Session v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_hours:
+        description: "Session duration (hours)"
+        required: false
+        default: "8"
+      dev_stack:
+        description: "Dev stack (full|minimal|python|node)"
+        required: false
+        default: "full"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: dev-session-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  SESSION_PROFILE: "dev"
+  DURATION_HOURS: ${{ github.event.inputs.duration_hours || '8' }}
+  DEV_STACK: ${{ github.event.inputs.dev_stack || 'full' }}
+
+jobs:
+  dev-session:
+    runs-on: windows-latest
+    timeout-minutes: 520
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup RDP session
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\setup-rdp.ps1 -Profile $env:SESSION_PROFILE -DurationHours $env:DURATION_HOURS
+
+      - name: Install dev tools (VSCode, Git, Python, Node, Docker)
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\install-software.ps1 -Category dev -Stack $env:DEV_STACK
+
+      - name: Apply optimization profile
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\optimize-windows.ps1 -Profile $env:SESSION_PROFILE
+
+      - name: Setup tunnel
+        shell: pwsh
+        env:
+          TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+        run: |
+          pwsh .\core\powershell\setup-tunnel.ps1 -Providers $env:TUNNEL_PROVIDERS -LocalPort 3389
+
+      - name: Keepalive loop
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\keepalive.ps1 -DurationHours $env:DURATION_HOURS
+
+      - name: Upload RDP credentials artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials-dev
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Cleanup session
+        if: always()
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\cleanup.ps1 -Force

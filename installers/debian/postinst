@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# postinst — rdp-toolkit Debian post-installation script
+set -euo pipefail
+
+PKG_NAME="rdp-toolkit"
+INSTALL_DIR="/opt/rdp-toolkit"
+BIN_SYMLINK="/usr/bin/rdp-toolkit"
+COMP_DIR="/etc/bash_completion.d"
+COMP_FILE="${COMP_DIR}/rdp-toolkit"
+
+# Make sure scripts are executable
+if [ -d "${INSTALL_DIR}/scripts" ]; then
+    chmod 0755 "${INSTALL_DIR}/scripts/"*.sh 2>/dev/null || true
+    chmod 0755 "${INSTALL_DIR}/scripts/rdp-toolkit" 2>/dev/null || true
+fi
+find "${INSTALL_DIR}" -name '*.sh' -exec chmod 0755 {} \; 2>/dev/null || true
+
+# Create launcher symlink
+if [ -e "${INSTALL_DIR}/scripts/rdp-toolkit" ]; then
+    ln -sf "${INSTALL_DIR}/scripts/rdp-toolkit" "${BIN_SYMLINK}"
+elif [ -e "${INSTALL_DIR}/rdp_toolkit/__main__.py" ]; then
+    # Fallback wrapper if no shell launcher
+    cat > "${BIN_SYMLINK}" <<EOF
+#!/usr/bin/env bash
+exec python3 -m rdp_toolkit "\$@"
+EOF
+    chmod 0755 "${BIN_SYMLINK}"
+fi
+
+# Install bash completion if available
+if [ -d "${COMP_DIR}" ]; then
+    if [ -f "${INSTALL_DIR}/completions/rdp-toolkit.bash" ]; then
+        install -m 0644 "${INSTALL_DIR}/completions/rdp-toolkit.bash" "${COMP_FILE}"
+    else
+        cat > "${COMP_FILE}" <<'EOF'
+_rdp_toolkit_completion() {
+    local cur words
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    words="doctor config tunnel vm rdp session start stop status notify --help --version"
+    COMPREPLY=( $(compgen -W "${words}" -- "${cur}") )
+}
+complete -F _rdp_toolkit_completion rdp-toolkit
+EOF
+        chmod 0644 "${COMP_FILE}"
+    fi
+fi
+
+echo
+echo "=================================================="
+echo " ${PKG_NAME} v9.0.0 installed successfully!"
+echo "=================================================="
+echo
+echo " Quick start:"
+echo "   rdp-toolkit doctor        # Verify environment"
+echo "   rdp-toolkit config init   # Create initial config"
+echo "   rdp-toolkit tunnel start  # Start a tunnel"
+echo
+echo " Config dir:   ~/.config/rdp-toolkit/"
+echo " Install dir:  ${INSTALL_DIR}"
+echo " Documentation: https://github.com/usekarne/github-rdp-mega-toolkit"
+echo
+echo " Reload shell to enable bash completion:"
+echo "   source /etc/bash_completion.d/rdp-toolkit"
+echo
+
+# Trigger debconf / symlink update where needed
+which update-desktop-database >/dev/null 2>&1 && update-desktop-database -q || true
+
+exit 0

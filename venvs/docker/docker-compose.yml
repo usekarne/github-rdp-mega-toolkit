@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  kali-rdp:
+    build:
+      context: ../..
+      dockerfile: venvs/docker/Dockerfile.kali
+    image: github-rdp-toolkit:kali-v9
+    container_name: kali-rdp
+    ports:
+      - "3389:3389"
+    environment:
+      - RDP_USER=runner
+      - SESSION_HOURS=6
+      - TUNNEL_PROVIDERS=serveo,localhost.run,cloudflare
+    volumes:
+      - rdp-data:/home/runner
+    restart: unless-stopped
+    networks:
+      - rdp-net
+
+  ubuntu-rdp:
+    build:
+      context: ../..
+      dockerfile: venvs/docker/Dockerfile.ubuntu
+    image: github-rdp-toolkit:ubuntu-v9
+    container_name: ubuntu-rdp
+    ports:
+      - "3390:3389"
+    environment:
+      - RDP_USER=runner
+      - SESSION_HOURS=6
+    volumes:
+      - rdp-data-ubuntu:/home/runner
+    restart: unless-stopped
+    networks:
+      - rdp-net
+
+volumes:
+  rdp-data:
+  rdp-data-ubuntu:
+
+networks:
+  rdp-net:
+    driver: bridge

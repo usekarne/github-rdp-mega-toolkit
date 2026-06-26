@@ -1,0 +1,62 @@
+name: "Cleanup Old Artifacts v9.0"
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: "Artifact age cutoff (days)"
+        required: false
+        default: "7"
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  RETENTION_DAYS: ${{ github.event.inputs.retention_days || '7' }}
+
+jobs:
+  cleanup-artifacts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete artifacts older than retention window via API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          NOW_EPOCH=$(date +%s)
+          CUTOFF=$(( NOW_EPOCH - RETENTION_DAYS * 86400 ))
+          echo "Cutoff epoch: $CUTOFF ($RETENTION_DAYS days ago)"
+
+          # Iterate through all workflow runs and their artifacts
+          deleted=0
+          for run_id in $(gh run list --repo "$REPO" --limit 100 --json databaseId --jq '.[].databaseId'); do
+            for art in $(gh api "repos/$REPO/actions/runs/$run_id/artifacts" --jq '.artifacts[] | "\(.id) \(.name) \(.created_at)"' 2>/dev/null || true); do
+              set -- $art
+              ART_ID=$1
+              ART_NAME=$2
+              ART_DATE=$3
+              ART_EPOCH=$(date -d "$ART_DATE" +%s 2>/dev/null || echo 0)
+              if [ "$ART_EPOCH" -lt "$CUTOFF" ] && [ "$ART_EPOCH" -gt 0 ]; then
+                echo "Deleting artifact $ART_NAME (id=$ART_ID, created=$ART_DATE)"
+                gh api -X DELETE "repos/$REPO/actions/artifacts/$ART_ID" || echo "Failed to delete $ART_ID"
+                deleted=$((deleted + 1))
+              fi
+            done
+          done
+          echo "Deleted $deleted artifacts older than $RETENTION_DAYS days."
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          echo "Artifact cleanup workflow complete."

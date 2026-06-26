@@ -1,0 +1,96 @@
+# =============================================================================
+# windows.yaml — Windows overrides on top of configs/default.yaml.
+#
+# Windows uses `winget` (Windows Package Manager) as the primary installer
+# with `choco` (Chocolatey) as a fallback. The default profile is `gaming`
+# because most Windows users are running RDP for games / multimedia that
+# don't behave well under the productivity profile's `+aero` / `+menu-anims`
+# flags.
+# =============================================================================
+
+version: "9.0.0"
+platform: windows
+profile: gaming                   # Windows users lean towards gaming / multimedia
+
+session:
+  hours: 4                        # Shorter default — Windows runners are pricier
+  username: runner
+  password: ""
+  domain: ""
+
+# Cloudflare tunnels tend to have better throughput from non-USA clients
+# (which is where most Windows users are). Serveo is a fine second.
+tunnel:
+  priority:
+    - cloudflare
+    - serveo
+    - localhost.run
+    - localtunnel
+
+# Windows software installed via winget (with choco fallback). The
+# install-software.ps1 script reads configs/software-list.json for the
+# canonical per-app mapping; this list is the high-level "what gets installed"
+# summary.
+software:
+  - Git.Git
+  - Microsoft.WindowsTerminal
+  - Mozilla.Firefox
+  - Microsoft.VisualStudioCode
+  - 7zip.7zip
+  - VideoLAN.VLC
+  - Cloudflare.cloudflared
+  - jqlang.jq
+
+# Gaming profile — low-latency, AVC444, hardware-accelerated decoding.
+rdp:
+  description: "Low-latency profile for gaming / multimedia (Windows)"
+  xfreerdp_args:
+    - "/cert:ignore"
+    - "/gfx:AVC444"
+    - "/gfx-hw:1"
+    - "/network:auto"
+    - "+glyph-cache"
+    - "-theming"
+  resolution: "1920x1080"
+  color_depth: 32
+  audio: "sys:alsa"
+
+# Windows-side notify (server-side alerts still come from the GitHub runner).
+notify:
+  telegram:
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+  discord:
+    enabled: false
+    webhook_url: ""
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 587
+    to: ""
+
+# Docker Desktop on Windows is supported (WSL2 backend). Default VM is the
+# Wine-based "windows-compat" image — see docker/windows-rdp/Dockerfile for
+# why we don't ship a real Windows image.
+vm:
+  enabled: true
+  default: windows
+  docker_image_prefix: "rdp-toolkit/"
+  compose_file: "docker/docker-compose.yml"
+  healthcheck_timeout: 180        # Wine takes longer to come up
+
+github:
+  repo: "usekarne/github-rdp-mega-toolkit"
+  branch: "main"
+  workflow: "windows-rdp.yml"     # use the Windows-specific workflow
+  rotate_workflow: "credential-rotate.yml"
+  credentials_artifact: "rdp-credentials"
+  api_url: "https://api.github.com"
+  pat_env_var: "GH_PAT"
+
+# Windows-specific paths — used by the installer + the platforms.windows module.
+paths:
+  install_dir:    "%LOCALAPPDATA%\\Programs\\rdp-toolkit"
+  config_dir:     "%APPDATA%\\rdp-toolkit"
+  completions_dir: "%LOCALAPPDATA%\\Programs\\rdp-toolkit\\completions"

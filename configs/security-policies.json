@@ -1,0 +1,66 @@
+{
+  "version": "9.0.0",
+  "description": "Security policies for RDP Mega Toolkit v9.0. Covers password complexity, session duration / idle timeout, and audit log retention.",
+  "password_policy": {
+    "min_length": 16,
+    "max_length": 64,
+    "complexity": {
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_digits": true,
+      "require_symbols": true,
+      "allowed_symbols": "!@#$%^&*()-_=+[]{}<>?",
+      "min_unique_chars": 8
+    },
+    "rotation_interval_hours": 6,
+    "history_size": 5,
+    "reuse_prevention": true,
+    "generation_algorithm": "cryptographically_secure_random",
+    "encoding": "ascii",
+    "storage": "artifact_only"
+  },
+  "session_policy": {
+    "max_duration_hours": 24,
+    "min_duration_hours": 1,
+    "idle_timeout_minutes": 30,
+    "max_concurrent_sessions_per_user": 1,
+    "max_concurrent_sessions_per_repo": 5,
+    "force_logout_on_timeout": true,
+    "allow_extension": false
+  },
+  "audit_policy": {
+    "log_retention_days": 30,
+    "log_path": "/tmp/rdp-mega/audit.log",
+    "events_to_log": [
+      "session_start",
+      "session_end",
+      "password_rotate",
+      "tunnel_up",
+      "tunnel_failover",
+      "tunnel_down",
+      "health_check",
+      "force_kill",
+      "config_change"
+    ],
+    "include_pii": false,
+    "redact_passwords": true,
+    "log_format": "json_lines",
+    "rotation_size_mb": 50
+  },
+  "access_control": {
+    "require_github_token": true,
+    "allowed_repositories": ["usekarne/github-rdp-mega-toolkit"],
+    "restrict_to_branches": ["main"],
+    "allow_workflow_dispatch": true,
+    "allow_schedule": true
+  },
+  "tunnel_security": {
+    "allowed_providers": ["serveo", "localhost.run", "cloudflare"],
+    "banned_providers": ["ngrok"],
+    "ssh_strict_host_key_checking": false,
+    "ssh_user_known_hosts_file": "NUL",
+    "ssh_exit_on_forward_failure": true,
+    "ssh_server_alive_interval_seconds": 30,
+    "ssh_server_alive_count_max": 3
+  }
+}

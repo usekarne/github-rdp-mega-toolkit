@@ -1,0 +1,110 @@
+name: "Ultimate RDP v9.0 (24hr)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      optimize_profile:
+        description: "Optimization profile"
+        required: false
+        type: choice
+        options:
+          - productivity
+          - gaming
+          - minimal
+        default: gaming
+      install_software:
+        description: "Install software list?"
+        required: false
+        type: boolean
+        default: true
+      rotate_password:
+        description: "Rotate password every 6 hours?"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  ultimate-rdp:
+    runs-on: windows-latest
+    timeout-minutes: 1450
+    env:
+      RDP_MASTER_PASSWORD: ${{ secrets.RDP_MASTER_PASSWORD }}
+      TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+      OPTIMIZE_PROFILE: ${{ inputs.optimize_profile }}
+      SESSION_HOURS: "24"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup RDP"
+        shell: pwsh
+        run: .dp_toolkitre_ps\setup-rdp.ps1
+
+      - name: "Optimize Windows"
+        shell: pwsh
+        run: .dp_toolkitre_ps\optimize-windows.ps1
+
+      - name: "Install Software"
+        if: ${{ inputs.install_software }}
+        shell: pwsh
+        run: .dp_toolkitre_ps\install-software.ps1
+
+      - name: "Setup Tunnel (serveo -> localhost.run -> cloudflare)"
+        shell: pwsh
+        run: .dp_toolkitre_ps\setup-tunnel.ps1
+
+      - name: "Upload Credentials"
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: "Keep Alive 24 Hours (health every 30min, rotate every 6hr)"
+        shell: pwsh
+        run: |
+          $end = (Get-Date).AddHours(24)
+          $lastRotate = Get-Date
+          $lastHealth = Get-Date
+          $iter = 0
+          while ((Get-Date) -lt $end) {
+            $iter++
+            $rem = [math]::Round(($end - (Get-Date)).TotalSeconds)
+            $h = [math]::Floor($rem / 3600)
+            $m = [math]::Floor(($rem - ($h * 3600)) / 60)
+            Write-Host "Ultimate session #$iter - ${h}h ${m}m remaining"
+
+            # Health check every 30 minutes
+            if ((Get-Date) - $lastHealth).TotalMinutes -ge 30 {
+              Write-Host "--- Health check ---"
+              .dp_toolkitre_ps\health-check.ps1
+              $lastHealth = Get-Date
+            }
+
+            # Password rotation every 6 hours (when enabled)
+            if ('${{ inputs.rotate_password }}' -eq 'true' -and ((Get-Date) - $lastRotate).TotalHours -ge 6) {
+              Write-Host '--- Rotating password ---'
+              .dp_toolkitre_ps\rotate-password.ps1
+              $lastRotate = Get-Date
+            }
+
+            Start-Sleep -Seconds 300
+          }
+
+      - name: "Cleanup"
+        if: always()
+        shell: pwsh
+        run: .dp_toolkitre_ps\cleanup.ps1

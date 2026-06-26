@@ -1,0 +1,80 @@
+name: "Gaming Session v9.0"
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_hours:
+        description: "Session duration (hours)"
+        required: false
+        default: "6"
+      gfx_mode:
+        description: "Graphics mode (RFX, AVC444, AVC420)"
+        required: false
+        default: "RFX"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: gaming-session-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+  SESSION_PROFILE: "gaming"
+  DURATION_HOURS: ${{ github.event.inputs.duration_hours || '6' }}
+  GFX_MODE: ${{ github.event.inputs.gfx_mode || 'RFX' }}
+
+jobs:
+  gaming-session:
+    runs-on: windows-latest
+    timeout-minutes: 400
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup RDP session (gaming profile, no software install)
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\setup-rdp.ps1 -Profile $env:SESSION_PROFILE -DurationHours $env:DURATION_HOURS -SkipSoftwareInstall
+
+      - name: Apply gaming optimization profile
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\optimize-windows.ps1 -Profile $env:SESSION_PROFILE -GfxMode $env:GFX_MODE
+
+      - name: Setup tunnel (with /gfx:RFX hint)
+        shell: pwsh
+        env:
+          TUNNEL_PROVIDERS: "serveo,localhost.run,cloudflare"
+        run: |
+          pwsh .\core\powershell\setup-tunnel.ps1 -Providers $env:TUNNEL_PROVIDERS -LocalPort 3389 -GfxHint "/gfx:$env:GFX_MODE"
+
+      - name: Keepalive loop
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\keepalive.ps1 -DurationHours $env:DURATION_HOURS
+
+      - name: Upload RDP credentials artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdp-credentials-gaming
+          path: |
+            rdp-password.txt
+            RDP_USERNAME.txt
+            RDP_PASSWORD.txt
+            tunnel-info.txt
+            tunnel-type.txt
+            tunnel-host.txt
+            tunnel-port.txt
+            connect-info.txt
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Cleanup session
+        if: always()
+        shell: pwsh
+        run: |
+          pwsh .\core\powershell\cleanup.ps1 -Force

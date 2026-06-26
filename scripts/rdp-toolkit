@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# =============================================================================
+# rdp-toolkit — Thin bash launcher for the Python package.
+#
+# This script is what gets symlinked into /usr/local/bin/rdp-toolkit (by the
+# .deb), into $PREFIX/bin/rdp-toolkit (by the Termux installer), into
+# ~/.local/bin/rdp-toolkit (by the universal installer), and into
+# %LOCALAPPDATA%\Programs\rdp-toolkit\rdp-toolkit.cmd (by the NSIS installer
+# via a sibling .cmd wrapper).
+#
+# It does three things, in order:
+#   1. Locate a usable `python3` (or `python` on Windows-WSL fallback).
+#   2. Export RDP_TOOLKIT_LAUNCHER=1 so the Python side can detect it.
+#   3. Exec `python3 -m rdp_toolkit "$@"`.
+#
+# Why a wrapper instead of a console_scripts entry point?  Because:
+#   * The .deb / NSIS / Termux installers can drop this single file onto
+#     $PATH without needing to run pip install at all.
+#   * It works on systems where pip's --user bin dir isn't on $PATH.
+#   * It works on Termux, where pip-installed entry points sometimes fail
+#     because of the Android SELinux restrictions on Python's `paxctl`.
+# =============================================================================
+
+set -e
+
+# --- Locate python3 ---------------------------------------------------------
+PYTHON=""
+for candidate in python3 python python3.13 python3.12 python3.11 python3.10; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        # Make sure it's actually 3.10+ — `python3` on some old systems is 3.6.
+        ver=$("$candidate" -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "0.0")
+        major=${ver%%.*}
+        minor=${ver#*.}
+        if [ "$major" -eq 3 ] && [ "$minor" -ge 10 ] 2>/dev/null; then
+            PYTHON="$candidate"
+            break
+        fi
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    echo "[ERR]  rdp-toolkit: Python 3.10+ not found on \$PATH." >&2
+    echo "       Install Python 3.10 or newer from https://www.python.org/downloads/" >&2
+    exit 127
+fi
+
+# --- Detect the package install location ------------------------------------
+# If the package was installed via `pip install --user`, the `rdp_toolkit`
+# directory is on the user's site-packages path, which `$PYTHON -m` will find
+# automatically. If the package is being run from a git checkout, we want
+# `python -m rdp_toolkit` to find the local checkout, not an unrelated
+# installed version.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PKG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/rdp_toolkit"
+
+# If a local rdp_toolkit/ directory exists next to this launcher, prefer it.
+# This makes `./scripts/rdp-toolkit doctor` work straight from a git clone.
+if [ -d "$PKG_DIR" ]; then
+    export PYTHONPATH="$(dirname "$PKG_DIR")${PYTHONPATH:+:$PYTHONPATH}"
+fi
+
+# --- Hand off to Python -----------------------------------------------------
+export RDP_TOOLKIT_LAUNCHER=1
+exec "$PYTHON" -m rdp_toolkit "$@"
